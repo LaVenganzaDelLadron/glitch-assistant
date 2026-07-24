@@ -1,11 +1,28 @@
 from __future__ import annotations
+import logging
+from typing import Any
 from app.core.ai.llm_error import LLMError
 from app.core.config.configuration_error import ConfigurationError
 from app.core.config.settings import get_settings
 
+logger = logging.getLogger(__name__)
 
-def generate(prompt: str, history, tool_result=None) -> str:
-    if tool_result:
+
+def generate(prompt: str, history: list[dict[str, str]], tool_result: str | None = None) -> str:
+    """Send a prompt with conversation history to the LLM and return the response.
+
+    Args:
+        prompt: The current user input.
+        history: A list of previous message dicts (role/content pairs).
+        tool_result: Optional result from a tool execution to include in context.
+
+    Returns:
+        The model's response text, stripped of leading/trailing whitespace.
+
+    Raises:
+        LLMError: If configuration is invalid, the dependency is missing, or the API call fails.
+    """
+    if not prompt or not prompt.strip():
         raise LLMError("Prompt cannot be empty.")
 
     try:
@@ -18,9 +35,30 @@ def generate(prompt: str, history, tool_result=None) -> str:
     except ImportError as error:
         raise LLMError("MISSING DEPENDENCY: RUN 'pip install -r requirements.txt'.") from error
 
+    messages: list[dict[str, str]] = list(history)
+
+    if tool_result:
+        messages.append({
+            "role": "system",
+            "content": f"The user invoked a tool and received this result:\n{tool_result}",
+        })
+
+    messages.append({"role": "user", "content": prompt})
+
+    print("Sending %d messages to model %s", len(messages), settings.model)
+
     try:
-        client = OpenAI(api_key=settings.api_key, base_url=settings.base_url, timeout=settings.timeout)
-        response = client.responses.create(input=prompt, model=settings.model)
+        client = OpenAI(
+            api_key=settings.api_key,
+            base_url=settings.base_url,
+            timeout=settings.timeout,
+        )
+        response = client.chat.completions.create(
+            messages=messages, model=settings.model
+        )
     except APIError as error:
         raise LLMError(f"GROQ REQUEST FAILED: {error}") from error
-    return response.output_text.strip()
+
+    reply = response.choices[0].message.content.strip()
+    logger.debug("Received response: %.120s…", reply)
+    return reply

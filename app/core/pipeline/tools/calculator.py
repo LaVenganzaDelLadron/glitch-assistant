@@ -139,7 +139,7 @@ def _safe_eval(node: ast.AST) -> Any:
     Args:
         node: An AST node to evaluate.
 
-    Returns:
+    Returns:lueError: If the node uses disallowed synt
         The numeric result of evaluating the node.
 
     Raises:
@@ -163,7 +163,7 @@ def _safe_eval(node: ast.AST) -> Any:
         op_func = _ALLOWED_OPS.get(type(node.op))
         if op_func is None:
             raise ValueError(f"Binary operator {type(node.op).__name__} is not allowed.")
-        left = _safe_eval(node.operand)
+        left = _safe_eval(node.left)
         right = _safe_eval(node.right)
         return op_func(left, right)
 

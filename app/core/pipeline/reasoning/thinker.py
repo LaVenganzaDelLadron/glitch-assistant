@@ -1,16 +1,44 @@
-#app/core/pipeline/reasoning/thinker.py
+"""Intent classification — decides whether a tool should handle the input."""
 
-from app.core.pipeline.tools import calculator
+from __future__ import annotations
+import logging
+from dataclasses import dataclass, field
+from typing import Callable
 
+logger = logging.getLogger(__name__)
+
+
+@dataclass
 class Decision:
-    def __init__(self, use_tool=False, tool=None):
-        self.use_tool = use_tool
-        self.tool = tool
+    """Represents the system's decision about how to handle user input."""
 
-def decide(text):
+    use_tool: bool = False
+    tool: Callable[..., str | None] | None = field(default=None)
+
+
+def decide(text: str) -> Decision:
+    """Classify user intent and return the appropriate Decision.
+
+    Currently supports:
+        - Expressions containing ``calculate``, ``compute``, ``evaluate``,
+          or ``what is``/``what's`` → calculator tool.
+
+    Args:
+        text: The cleaned user input string.
+
+    Returns:
+        A Decision indicating whether a tool should be invoked, and if so
+        which callable to use.
+    """
     try:
-        if text.startwith("calculate", ""):
-            return Decision(use_tool=True, tool=calculator)
+        lower = text.strip().lower()
+        # Trigger on common math-related keywords anywhere in the text
+        math_triggers = ("calculate", "compute", "evaluate", "what is", "what's")
+        if any(trigger in lower for trigger in math_triggers):
+            from app.core.pipeline.tools import calculator
+
+            return Decision(use_tool=True, tool=calculator.execute)
         return Decision(use_tool=False)
-    except Exception as e:
-        print(f"ERROR: {e}")
+    except Exception as exc:
+        logger.exception("Error during intent classification")
+        return Decision(use_tool=False)

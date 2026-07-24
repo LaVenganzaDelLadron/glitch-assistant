@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-
-from app.llm import LLMError, generate
+from app.core.ai.groq import LLMError, generate
 
 
 def parse_args() -> argparse.Namespace:

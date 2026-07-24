@@ -4,8 +4,8 @@ from app.core.config.configuration_error import ConfigurationError
 from app.core.config.settings import get_settings
 
 
-def generate(prompt: str) -> str:
-    if not prompt.strip():
+def generate(prompt: str, history, tool_result=None) -> str:
+    if tool_result:
         raise LLMError("Prompt cannot be empty.")
 
     try:

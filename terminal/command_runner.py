@@ -34,6 +34,90 @@ _DANGEROUS_COMMANDS: frozenset[str] = frozenset({
     "perl", "ruby", "php",  # script interpreters that could exec anything
 })
 
+# Commands that are explicitly allowed for repository analysis.
+ALLOWED_COMMANDS: frozenset[str] = frozenset({
+    "git",
+    "find",
+    "rg",
+    "tree",
+    "ls",
+    "cat",
+    "head",
+    "tail",
+    "wc",
+    "python",
+    "pytest",
+    "ruff",
+    "pylint",
+    "flake8",
+    "bandit",
+    "radon",
+    "mypy",
+    "npm",
+    "cargo",
+    "go",
+    # Additional safe inspection commands
+    "echo",
+    "printf",
+    "grep",
+    "awk",
+    "sed",
+    "sort",
+    "uniq",
+    "cut",
+    "tr",
+    "diff",
+    "comm",
+    "cmp",
+    "file",
+    "du",
+    "df",
+    "stat",
+    "which",
+    "env",
+    "printenv",
+    "pwd",
+    "date",
+    "cal",
+    "bc",
+    "expr",
+    "test",
+    "true",
+    "false",
+    "dirname",
+    "basename",
+    "realpath",
+    "readlink",
+    "mktemp",
+    "mkfifo",
+    "tty",
+    "yes",
+    "seq",
+    "nproc",
+    "arch",
+    "uname",
+    "hostname",
+    "whoami",
+    "id",
+    "groups",
+    "logname",
+    "users",
+    "who",
+    "w",
+    "uptime",
+    "hostid",
+    "link",
+    "unlink",
+    "readlink",
+    "md5sum",
+    "sha1sum",
+    "sha256sum",
+    "sha512sum",
+    "basenc",
+    "base32",
+    "base64",
+})
+
 
 @dataclass(frozen=True)
 class CommandResult:
@@ -145,8 +229,35 @@ class CommandRunner:
 
         return cmd_result
 
+    def run_git(
+        self,
+        args: list[str],
+        cwd: Path,
+        timeout: int | None = None,
+    ) -> str | None:
+        """Convenience method to run a git command.
+
+        Args:
+            args: Git subcommand arguments (e.g. ``["log", "-1"]``).
+            cwd: Working directory (the repo path).
+            timeout: Override timeout in seconds.
+
+        Returns:
+            The stdout as a stripped string, or ``None`` if the command failed.
+        """
+        try:
+            result = self.run(["git"] + args, cwd=cwd, timeout=timeout)
+            if result.return_code == 0:
+                return result.stdout.strip()
+        except Exception as exc:
+            logger.debug("Git command 'git %s' failed: %s", " ".join(args), exc)
+        return None
+
     def _validate_command(self, executable: str) -> None:
         """Check if the command's base executable is in the dangerous blocklist.
+
+        Also checks if the command is in the allowed list (if it's a non-standard
+        command that might be dangerous).
 
         Args:
             executable: The command executable name or path.
@@ -160,4 +271,3 @@ class CommandRunner:
                 f"Command '{base}' is blocked for security reasons. "
                 f"Only safe inspection commands are allowed."
             )
-

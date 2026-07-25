@@ -56,7 +56,6 @@ def generate(prompt: str, history: list[dict[str, str]], tool_result: str | None
         response = client.chat.completions.create(
             messages=messages,
             model=settings.model,
-            tool_choice="none",
         )
     except APIError as error:
         raise LLMError(f"GROQ REQUEST FAILED: {error}") from error

@@ -1,20 +1,34 @@
-"""Repository analysis orchestrator — ties together cloning, scanning, AI agent, and reporting."""
+"""Repository analysis orchestrator — ties together cloning, scanning, statistics, and LLM reporting.
+
+Pipeline:
+    1. Extract repository identifier from user input.
+    2. Clone the repository into a temporary directory.
+    3. Index files and detect languages.
+    4. Run security, complexity, documentation, and git analysis.
+    5. Build structured context.
+    6. Send context to LLM for analysis.
+    7. Build and return the final report.
+"""
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 from typing import Any
 
-from analysis.prompts import SYSTEM_PROMPT, ANALYSIS_INSTRUCTIONS, build_file_index_prompt
 from analysis.report import AnalysisReport
+from analysis.report_builder import ReportBuilder
+from analysis.prompt_builder import PromptBuilder
 from app.github.client import GithubClient
-from app.github.clone import RepoCloner, CloneError
-from app.github.scanner import RepoScanner
-from terminal.command_runner import CommandRunner, CommandResult, DangerousCommandError, TimeoutError
-from ai.agent import AIAgent
-from recommendation.suggester import RecommendationSuggester
+from scanner.repo_cloner import RepoCloner, CloneError
+from scanner.file_indexer import FileIndexer
+from scanner.language_detector import LanguageDetector
+from scanner.dependency_detector import DependencyDetector
+from security.security_scanner import SecurityScanner
+from metrics.complexity import ComplexityAnalyzer
+from metrics.documentation import DocumentationAnalyzer
+from metrics.git_scanner import GitScanner
+from terminal.command_runner import CommandRunner
 
 logger = logging.getLogger(__name__)
 
@@ -23,17 +37,84 @@ class AnalysisError(Exception):
     """Raised when the analysis pipeline encounters a fatal error."""
 
 
+class StatisticsCollector:
+    """Collects aggregate statistics from the file index and analysis results."""
+
+    @staticmethod
+    def collect(
+        file_index: list[dict[str, Any]],
+        languages: dict[str, float],
+        git_info: dict[str, Any],
+        documentation: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Build a statistics summary.
+
+        Args:
+            file_index: The complete file index.
+            languages: Detected language distribution.
+            git_info: Git metadata.
+            documentation: Documentation analysis.
+
+        Returns:
+            A dict with aggregate statistics.
+        """
+        total_files = len(file_index)
+        total_lines = sum(f.get("lines", 0) for f in file_index)
+        total_size = sum(f.get("size", 0) for f in file_index)
+
+        # Count by extension
+        ext_counts: dict[str, int] = {}
+        for f in file_index:
+            ext = f.get("extension", "(unknown)")
+            ext_counts[ext] = ext_counts.get(ext, 0) + 1
+
+        # Top 10 extensions
+        top_exts = sorted(ext_counts.items(), key=lambda x: -x[1])[:10]
+
+        has_tests = any(
+            "test" in f.get("path", "").lower() or
+            f.get("path", "").startswith("tests/") or
+            f.get("path", "").startswith("test/")
+            for f in file_index
+        )
+
+        stats = {
+            "total_files": total_files,
+            "total_lines": total_lines,
+            "total_size_bytes": total_size,
+            "total_size_kb": round(total_size / 1024, 1),
+            "languages_detected": list(languages.keys()),
+            "top_extensions": dict(top_exts),
+            "has_tests": has_tests,
+            "test_files_count": sum(
+                1 for f in file_index
+                if "test" in f.get("path", "").lower()
+            ),
+            "documentation_coverage": documentation.get("docstring_coverage", 0),
+            "comment_density": documentation.get("comment_density", 0),
+            "todo_count": documentation.get("todo_count", 0),
+            "fixme_count": documentation.get("fixme_count", 0),
+            "commit_count": git_info.get("commit_count", 0),
+            "contributors": git_info.get("contributors", 0),
+            "has_ci": documentation.get("has_ci", False),
+            "has_docker": False,
+        }
+
+        logger.info(
+            "Statistics collected: %d files, %d lines, %.1f KB, %d commits",
+            stats["total_files"],
+            stats["total_lines"],
+            stats["total_size_kb"],
+            stats["commit_count"],
+        )
+        return stats
+
+
 class RepoAnalyzer:
     """Orchestrates the full repository analysis pipeline.
 
-    Steps:
-        1. Extract repository identifier from user input.
-        2. Clone the repository into a temporary directory.
-        3. Scan the local file tree.
-        4. Initialize an AI agent with file context and command capabilities.
-        5. Run the AI agent to produce a structured report.
-        6. Apply priority levels to recommendations.
-        7. Return the final report.
+    All command execution is owned by Python modules. The LLM receives
+    only structured data and generates analysis.
     """
 
     def __init__(
@@ -63,9 +144,17 @@ class RepoAnalyzer:
         self._clone_timeout = clone_timeout
 
         self._github_client = GithubClient()
-        self._scanner = RepoScanner()
         self._command_runner = CommandRunner(timeout=command_timeout)
-        self._suggester = RecommendationSuggester()
+        self._file_indexer = FileIndexer()
+        self._language_detector = LanguageDetector()
+        self._dependency_detector = DependencyDetector()
+        self._security_scanner = SecurityScanner()
+        self._complexity_analyzer = ComplexityAnalyzer()
+        self._documentation_analyzer = DocumentationAnalyzer()
+        self._git_scanner = GitScanner(command_runner=self._command_runner)
+        self._prompt_builder = PromptBuilder()
+        self._report_builder = ReportBuilder()
+        self._statistics_collector = StatisticsCollector()
 
     def analyze(self, user_input: str) -> AnalysisReport:
         """Run the full analysis pipeline.
@@ -91,7 +180,7 @@ class RepoAnalyzer:
         clone_url = self._github_client.build_clone_url(repo_id)
         logger.info("Starting analysis of %s (%s)", repo_id, clone_url)
 
-        # Step 2: Clone
+        # Step 2: Clone repository
         cloner = RepoCloner(timeout=self._clone_timeout)
         try:
             with cloner.clone(clone_url) as repo_path:
@@ -115,6 +204,8 @@ class RepoAnalyzer:
     ) -> AnalysisReport:
         """Analyze a repository that has already been cloned to a local path.
 
+        Python owns all command execution. The LLM only receives structured data.
+
         Args:
             repo_id: The ``owner/repo`` identifier.
             clone_url: The clone URL used.
@@ -123,129 +214,110 @@ class RepoAnalyzer:
         Returns:
             A fully populated :class:`AnalysisReport`.
         """
-        # Step 3: Scan file tree
-        logger.info("Scanning file tree: %s", repo_path)
-        file_index = self._scanner.scan(repo_path)
-        logger.info("Scanned %d files", len(file_index))
+        # Step 3: Index files
+        logger.info("Indexing files: %s", repo_path)
+        file_index = self._file_indexer.scan(repo_path)
+        logger.info("Indexed %d files", len(file_index))
 
-        # Step 4: Build file index prompt
-        file_index_text = build_file_index_prompt(file_index)
-        logger.debug("File index prompt built (%d characters)", len(file_index_text))
+        # Step 4: Detect languages
+        logger.info("Detecting languages...")
+        languages = self._language_detector.detect(file_index)
 
-        # Step 5: Initialize AI agent
-        agent = AIAgent(
-            api_key=self._llm_api_key,
-            model=self._llm_model,
-            base_url=self._llm_base_url,
-            timeout=self._llm_timeout,
-            command_runner=self._command_runner,
-            repo_path=repo_path,
-        )
+        # Step 5: Detect dependencies
+        logger.info("Detecting dependencies...")
+        dependencies = self._dependency_detector.detect(repo_path)
 
-        # Step 6: Run the AI agent iteratively
-        logger.info("Starting AI agent analysis…")
-        analysis_result = agent.analyze(
-            system_prompt=SYSTEM_PROMPT,
-            analysis_instructions=ANALYSIS_INSTRUCTIONS,
+        # Step 6: Run security scan
+        logger.info("Running security scan...")
+        security = self._security_scanner.scan(repo_path, file_index)
+
+        # Step 7: Run complexity analysis
+        logger.info("Analyzing complexity...")
+        complexity = self._complexity_analyzer.analyze(repo_path, file_index)
+
+        # Step 8: Analyze documentation
+        logger.info("Analyzing documentation...")
+        documentation = self._documentation_analyzer.analyze(repo_path, file_index)
+
+        # Step 9: Gather git statistics
+        logger.info("Gathering git statistics...")
+        git_info = self._git_scanner.scan(repo_path)
+
+        # Step 10: Collect aggregate statistics
+        logger.info("Collecting statistics...")
+        statistics = self._statistics_collector.collect(
             file_index=file_index,
-            file_index_text=file_index_text,
+            languages=languages,
+            git_info=git_info,
+            documentation=documentation,
         )
-        logger.info("AI agent analysis completed")
 
-        # Step 7: Build the report from the AI response
-        report = self._build_report(repo_id, clone_url, analysis_result)
+        # Step 11: Build structured context and send to LLM
+        logger.info("Building prompt and sending to LLM...")
+        prompt = self._prompt_builder.build_analysis_prompt(
+            repo_id=repo_id,
+            languages=languages,
+            file_index=file_index,
+            statistics=statistics,
+            security=security,
+            complexity=complexity,
+            documentation=documentation,
+            git_info=git_info,
+            dependencies=dependencies,
+        )
 
-        # Step 8: Apply priority levels to recommendations
-        report.recommendations = self._suggester.prioritize(report.recommendations)
+        llm_response = self._call_llm(prompt)
+
+        # Step 12: Build report from LLM response
+        logger.info("Building final report...")
+        report = self._report_builder.build(
+            repo_id=repo_id,
+            clone_url=clone_url,
+            llm_response=llm_response,
+        )
+
+        # Add analysis metadata
+        report.languages = languages
 
         return report
 
-    def _build_report(
-        self,
-        repo_id: str,
-        clone_url: str,
-        analysis_result: dict[str, Any] | str,
-    ) -> AnalysisReport:
-        """Build an :class:`AnalysisReport` from the AI agent's result.
-
-        If the result is a string, it tries to parse it as JSON first,
-        falling back to a minimal report with the raw text as summary.
+    def _call_llm(self, prompt: str) -> str:
+        """Send the prompt to the LLM and return the response.
 
         Args:
-            repo_id: The ``owner/repo`` identifier.
-            clone_url: The clone URL used.
-            analysis_result: The AI agent's output — either a dict or a JSON string.
+            prompt: The full prompt (system + user) with structured data.
 
         Returns:
-            A populated :class:`AnalysisReport`.
+            The LLM's response string.
+
+        Raises:
+            AnalysisError: If the LLM call fails.
         """
-        report = AnalysisReport(
-            repository=repo_id,
-            clone_url=clone_url,
-        )
+        try:
+            from openai import APIError, OpenAI
 
-        # Parse the analysis result
-        if isinstance(analysis_result, dict):
-            data = analysis_result
-        elif isinstance(analysis_result, str):
-            try:
-                data = json.loads(analysis_result)
-            except json.JSONDecodeError:
-                # If the AI didn't return valid JSON, use the raw text as summary
-                report.summary = analysis_result
-                report.score = 50
-                logger.warning("AI output was not valid JSON; using as plain text summary")
-                return report
-        else:
-            report.summary = str(analysis_result)
-            report.score = 50
-            return report
+            client = OpenAI(
+                api_key=self._llm_api_key,
+                base_url=self._llm_base_url,
+                timeout=self._llm_timeout,
+            )
 
-        # Populate report fields
-        report.summary = data.get("summary", "")
-        report.score = data.get("score", 50)
-        report.languages = data.get("languages", {})
+            response = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model=self._llm_model,
+                temperature=0.3,
+            )
 
-        # Issues
-        for issue_data in data.get("issues", []):
-            from analysis.report import Issue
-            report.issues.append(Issue(
-                category=issue_data.get("category", "general"),
-                description=issue_data.get("description", ""),
-                file=issue_data.get("file"),
-                line=issue_data.get("line"),
-                severity=issue_data.get("severity", "medium"),
-            ))
+            reply = response.choices[0].message.content.strip()
+            logger.debug("LLM response received (%d characters)", len(reply))
+            return reply
 
-        # Strengths
-        for strength_data in data.get("strengths", []):
-            from analysis.report import Strength
-            report.strengths.append(Strength(
-                category=strength_data.get("category", "general"),
-                description=strength_data.get("description", ""),
-            ))
-
-        # Recommendations
-        for rec_data in data.get("recommendations", []):
-            from analysis.report import Recommendation
-            report.recommendations.append(Recommendation(
-                priority=rec_data.get("priority", "MEDIUM"),
-                category=rec_data.get("category", "general"),
-                description=rec_data.get("description", ""),
-                details=rec_data.get("details", ""),
-            ))
-
-        # Categorized findings
-        report.security = data.get("security", [])
-        report.performance = data.get("performance", [])
-        report.documentation = data.get("documentation", [])
-        report.architecture = data.get("architecture", [])
-        report.tests = data.get("tests", [])
-        report.complexity = data.get("complexity", [])
-        report.dependencies = data.get("dependencies", [])
-        report.ci_cd = data.get("ci_cd", [])
-        report.docker = data.get("docker", [])
-        report.maintainability = data.get("maintainability", [])
-
-        return report
+        except APIError as exc:
+            raise AnalysisError(f"LLM API error: {exc}") from exc
+        except ImportError as exc:
+            raise AnalysisError(
+                "Missing required dependency: openai. Run 'pip install -r requirements.txt'."
+            ) from exc
+        except Exception as exc:
+            raise AnalysisError(f"Unexpected LLM error: {exc}") from exc
 

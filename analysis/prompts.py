@@ -1,22 +1,25 @@
-"""System prompts and instructions for AI-powered repository analysis."""
+"""System prompts and instructions for AI-powered repository analysis.
 
-SYSTEM_PROMPT = """You are an expert software engineer and code reviewer AI.
-Your task is to analyze a local Git repository and produce a comprehensive,
+IMPORTANT: The LLM should NOT be instructed to execute commands or call tools.
+All command execution is handled by Python before the LLM is invoked.
+The LLM receives ONLY structured data and produces analysis.
+"""
+
+SYSTEM_PROMPT = """You are an expert software engineer and code reviewer.
+Your task is to analyze a repository and produce a comprehensive,
 actionable report about its quality, structure, and potential improvements.
 
-You have access to the repository's file contents and can execute terminal
-commands to inspect the codebase further.
+You will receive structured repository data including:
+- File structure and metadata
+- Language distribution
+- Security scan results
+- Complexity metrics
+- Documentation analysis
+- Git statistics
+- Dependency information
 
-Approach the analysis methodically:
-
-1. BUILD A FILE INDEX — Understand the project structure first.
-2. INSPECT IMPORTANT FILES — Read configuration files, entry points, README.
-3. RUN COMMANDS — Use terminal tools to gather additional info (git log, tests, linting).
-4. IDENTIFY ISSUES — Look for security problems, code smells, complexity, etc.
-5. PRODUCE A STRUCTURED REPORT — Output JSON with findings and recommendations.
-
-Be thorough but practical. Focus on findings that provide real value to the
-developer maintaining this repository.
+Analyze this data carefully and produce a detailed report.
+Focus on findings that provide real value to the developer maintaining this repository.
 """
 
 ANALYSIS_INSTRUCTIONS = """
@@ -25,57 +28,49 @@ Analyze the repository across these dimensions:
 ## Architecture & Organization
 - Is the project well-structured with clear separation of concerns?
 - Does the folder layout follow language/framework conventions?
-- Are there circular dependencies or overly coupled modules?
 
 ## Documentation
 - Is there a README? Is it informative?
 - Are there docstrings, inline comments, or API docs?
-- Is there a CONTRIBUTING guide, LICENSE, or CHANGELOG?
+- TODO/FIXME/HACK counts indicating technical debt.
 
 ## Coding Style & Quality
-- Consistent formatting? (lint with available tools)
-- Naming conventions followed? (PEP 8, camelCase, etc.)
+- Consistent formatting?
+- Naming conventions followed?
 - Type hints used (in typed languages)?
 - Unused imports, dead code, or commented-out code?
 
 ## Security
 - Hardcoded secrets, API keys, tokens, passwords?
-- SQL injection risks? Command injection?
-- Insecure dependencies?
-- Path traversal vulnerabilities?
+- Security scanner findings analysis.
 
 ## Dependency Management
 - Are dependencies pinned to specific versions?
 - Are there outdated or vulnerable dependencies?
-- Is there a lockfile? (package-lock.json, requirements.txt, Cargo.lock, etc.)
+- Is there a lockfile?
 
 ## Complexity
 - Are there functions/methods that are too long (>50 lines)?
-- Deeply nested conditionals or loops?
 - High cyclomatic complexity?
 - Duplicate code blocks?
 
 ## Testing
 - Are there tests? (unit, integration, e2e)
 - What's the test coverage estimate?
-- Are tests well-structured and meaningful?
 - CI/CD pipeline configured?
 
 ## Performance
-- Obvious performance bottlenecks? (N+1 queries, large loops, etc.)
+- Obvious performance bottlenecks?
 - Unnecessary allocations or I/O operations?
-- Caching strategies?
 
 ## Maintainability
 - Is the code easy to understand and modify?
-- Are there TODO/FIXME/HACK comments indicating technical debt?
 - Configuration hardcoded vs externalized?
 - Error handling comprehensive?
 
 ## Docker & DevOps
 - Dockerfile present? Multi-stage builds?
-- docker-compose.yml for local development?
-- CI/CD configuration? (GitHub Actions, GitLab CI, etc.)
+- CI/CD configuration?
 """
 
 
@@ -110,4 +105,3 @@ def build_file_index_prompt(file_index: list[dict]) -> str:
         lines.append(f"- {f['path']} ({size_kb:.1f} KB)")
 
     return "\n".join(lines)
-

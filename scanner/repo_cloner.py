@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, Iterator
+from typing import Iterator
 
 logger = logging.getLogger(__name__)
 
@@ -40,11 +40,11 @@ class RepoCloner:
 
     @contextmanager
     def clone(self, url: str) -> Iterator[Path]:
-        """Clone a repository into a temporary directory.
+        """Clone a repository into a temporary directory and clean up on exit.
 
-        This is a proper context manager (decorated with ``@contextmanager``)
-        so it can be used with the ``with`` statement and supports ``__exit__``
-        for automatic cleanup.
+        This is a proper context manager (decorated with ``@contextmanager``),
+        so it can be used with the ``with`` statement and guarantees cleanup
+        even when exceptions occur.
 
         Args:
             url: The HTTPS git clone URL of the repository.

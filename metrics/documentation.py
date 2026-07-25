@@ -23,27 +23,17 @@ class DocumentationAnalyzer:
     """
 
     def analyze(self, root: Path, file_index: list[dict[str, Any]]) -> dict[str, Any]:
-        """Analyze documentation in the repository.
-
-        Args:
-            root: The root :class:`Path` of the cloned repository.
-            file_index: The file index from :class:`FileIndexer`.
-
+        """Analyze repository documentation indicators and code documentation metrics.
+        
+        Parameters:
+            root (Path): Repository root containing top-level documentation files.
+            file_index (list[dict[str, Any]]): Indexed file data used to measure comments,
+                markers, and Python module docstrings.
+        
         Returns:
-            A dict containing:
-                - ``has_readme``: bool
-                - ``readme_quality``: str (``"excellent"``, ``"good"``, ``"minimal"``, ``"none"``)
-                - ``has_license``: bool
-                - ``has_contributing``: bool
-                - ``has_changelog``: bool
-                - ``has_code_of_conduct``: bool
-                - ``docstring_coverage``: float (estimated percentage)
-                - ``comment_density``: float (comments per 100 lines)
-                - ``todo_count``: int
-                - ``fixme_count``: int
-                - ``hack_count``: int
-                - ``xxx_count``: int
-                - ``findings``: list of dicts
+            dict[str, Any]: Metrics and findings for README, license, contributing,
+                changelog, code-of-conduct, docstring coverage, comment density, and
+                TODO/FIXME/HACK/XXX marker counts.
         """
         result: dict[str, Any] = {
             "has_readme": False,
@@ -199,14 +189,15 @@ class DocumentationAnalyzer:
         return "minimal"
 
     def _count_comment_lines(self, path: str, content: str) -> int:
-        """Count comment lines in a file based on its extension.
-
-        Args:
-            path: The file path (used to determine the language).
-            content: The file content.
-
+        """
+        Count comment markers in file content using syntax inferred from the file extension.
+        
+        Parameters:
+            path (str): File path used to determine the comment syntax.
+            content (str): File content to inspect.
+        
         Returns:
-            Number of lines that are comments.
+            int: Number of detected comment lines or comment markers.
         """
         ext = Path(path).suffix.lower()
 

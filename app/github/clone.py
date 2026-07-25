@@ -40,20 +40,19 @@ class RepoCloner:
 
     @contextmanager
     def clone(self, url: str) -> Iterator[Path]:
-        """Clone a repository into a temporary directory.
-
-        This is a proper context manager (decorated with ``@contextmanager``)
-        so it can be used with the ``with`` statement and supports ``__exit__``
-        for automatic cleanup.
-
+        """Clone a repository into a temporary directory for use within a context.
+        
+        The temporary directory is removed when the context exits.
+        
         Args:
-            url: The HTTPS git clone URL of the repository.
-
+            url: Repository URL to clone.
+        
         Yields:
-            The :class:`Path` to the temporary directory containing the cloned repo.
-
+            Path to the temporary directory containing the cloned repository.
+        
         Raises:
-            CloneError: If the clone fails for any reason (network, invalid URL, etc.).
+            CloneError: If cloning times out, Git is unavailable, or the clone
+                command fails.
         """
         self._temp_dir = Path(tempfile.mkdtemp(prefix="glitch_repo_"))
         logger.info("Cloning %s into temporary directory %s", url, self._temp_dir)

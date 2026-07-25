@@ -75,21 +75,19 @@ class FileIndexer:
     """
 
     def scan(self, root: Path) -> list[dict[str, Any]]:
-        """Walk the repository directory tree and collect file information.
-
-        Args:
-            root: The root :class:`Path` of the cloned repository.
-
+        """
+        Recursively scan a repository and collect metadata and text content for eligible files.
+        
+        Parameters:
+            root (Path): Directory to scan.
+        
         Returns:
-            A list of dicts, each containing:
-                - ``path``: Relative path from repository root (str)
-                - ``extension``: File extension (str, e.g. ``.py``)
-                - ``size``: File size in bytes (int)
-                - ``content``: Truncated text content (str)
-                - ``lines``: Number of lines in the file (int)
-
+            list[dict[str, Any]]: File records containing the relative path, extension,
+                size in bytes, text content, and line count. Content exceeding the
+                configured limit is truncated.
+        
         Raises:
-            NotADirectoryError: If ``root`` is not a directory.
+            NotADirectoryError: If `root` is not a directory.
         """
         if not root.is_dir():
             raise NotADirectoryError(f"Repository root is not a directory: {root}")

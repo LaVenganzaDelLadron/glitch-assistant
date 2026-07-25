@@ -143,13 +143,15 @@ class SecurityScanner:
         return findings
 
     def _run_bandit(self, root: Path) -> list[dict[str, Any]]:
-        """Run bandit security scanner if available.
-
-        Args:
-            root: The repository root path.
-
+        """
+        Run Bandit against the repository when the executable is available.
+        
+        Parameters:
+            root (Path): Repository root to scan.
+        
         Returns:
-            A list of finding dicts from bandit.
+            list[dict[str, Any]]: Findings reported by Bandit, or an empty list when
+                Bandit is unavailable, fails, times out, or produces invalid output.
         """
         import shutil
 

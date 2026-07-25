@@ -47,16 +47,17 @@ class StatisticsCollector:
         git_info: dict[str, Any],
         documentation: dict[str, Any],
     ) -> dict[str, Any]:
-        """Build a statistics summary.
-
-        Args:
-            file_index: The complete file index.
-            languages: Detected language distribution.
-            git_info: Git metadata.
-            documentation: Documentation analysis.
-
+        """
+        Aggregate repository analysis results into summary statistics.
+        
+        Parameters:
+            file_index (list[dict[str, Any]]): Per-file metadata used to calculate totals, extension counts, and test-file metrics.
+            languages (dict[str, float]): Detected language distribution.
+            git_info (dict[str, Any]): Git metadata, including commit and contributor counts.
+            documentation (dict[str, Any]): Documentation metrics and repository metadata.
+        
         Returns:
-            A dict with aggregate statistics.
+            dict[str, Any]: Aggregate file, language, test, documentation, Git, and repository metadata statistics.
         """
         total_files = len(file_index)
         total_lines = sum(f.get("lines", 0) for f in file_index)
@@ -126,15 +127,16 @@ class RepoAnalyzer:
         command_timeout: int = 60,
         clone_timeout: int = 120,
     ) -> None:
-        """Initialize the analyzer.
-
-        Args:
-            llm_api_key: API key for the LLM provider.
-            llm_model: Model identifier string.
-            llm_base_url: Base URL for the LLM API.
-            llm_timeout: Timeout in seconds for LLM requests.
-            command_timeout: Default timeout in seconds for terminal commands.
-            clone_timeout: Timeout in seconds for git clone operations.
+        """
+        Initialize the repository analyzer with LLM and operation timeout settings.
+        
+        Parameters:
+            llm_api_key (str): API key used to access the LLM provider.
+            llm_model (str): LLM model identifier.
+            llm_base_url (str): Base URL for the LLM provider.
+            llm_timeout (int): Timeout in seconds for LLM requests.
+            command_timeout (int): Timeout in seconds for command execution.
+            clone_timeout (int): Timeout in seconds for repository cloning.
         """
         self._llm_api_key = llm_api_key
         self._llm_model = llm_model
@@ -157,16 +159,17 @@ class RepoAnalyzer:
         self._statistics_collector = StatisticsCollector()
 
     def analyze(self, user_input: str) -> AnalysisReport:
-        """Run the full analysis pipeline.
-
-        Args:
-            user_input: Raw user input containing a GitHub repository URL or identifier.
-
+        """
+        Analyze a GitHub repository and produce a structured analysis report.
+        
+        Parameters:
+            user_input (str): A GitHub repository URL or an `owner/repo` identifier.
+        
         Returns:
-            A populated :class:`AnalysisReport` instance.
-
+            AnalysisReport: The completed repository analysis report.
+        
         Raises:
-            AnalysisError: If the pipeline fails at any stage.
+            AnalysisError: If the repository cannot be identified or cloned.
         """
         # Step 1: Extract repository
         repo_id = self._github_client.extract_repo(user_input)
@@ -202,17 +205,16 @@ class RepoAnalyzer:
         clone_url: str,
         repo_path: Path,
     ) -> AnalysisReport:
-        """Analyze a repository that has already been cloned to a local path.
-
-        Python owns all command execution. The LLM only receives structured data.
-
-        Args:
-            repo_id: The ``owner/repo`` identifier.
-            clone_url: The clone URL used.
-            repo_path: Path to the cloned repository on disk.
-
+        """
+        Analyze a locally cloned repository and produce its analysis report.
+        
+        Parameters:
+            repo_id (str): Repository identifier in ``owner/repo`` format.
+            clone_url (str): URL used to clone the repository.
+            repo_path (Path): Local path to the cloned repository.
+        
         Returns:
-            A fully populated :class:`AnalysisReport`.
+            AnalysisReport: The completed repository analysis report.
         """
         # Step 3: Index files
         logger.info("Indexing files: %s", repo_path)
@@ -282,16 +284,17 @@ class RepoAnalyzer:
         return report
 
     def _call_llm(self, prompt: str) -> str:
-        """Send the prompt to the LLM and return the response.
-
-        Args:
-            prompt: The full prompt (system + user) with structured data.
-
+        """
+        Send an analysis prompt to the configured LLM provider.
+        
+        Parameters:
+            prompt (str): The structured repository analysis prompt.
+        
         Returns:
-            The LLM's response string.
-
+            str: The LLM-generated response text.
+        
         Raises:
-            AnalysisError: If the LLM call fails.
+            AnalysisError: If the LLM dependency is unavailable or the request fails.
         """
         try:
             from openai import APIError, OpenAI

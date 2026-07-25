@@ -18,23 +18,15 @@ class ComplexityAnalyzer:
     """
 
     def analyze(self, root: Path, file_index: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Run complexity analysis on the repository.
-
-        Performs:
-            1. Radon cyclomatic complexity analysis (if radon installed).
-            2. Large file / long function detection via heuristics.
-            3. Line count distribution statistics.
-
-        Args:
-            root: The root :class:`Path` of the cloned repository.
-            file_index: The file index from :class:`FileIndexer`.
-
+        """
+        Analyze a repository for complexity, code-quality, and file-size findings.
+        
+        Parameters:
+            root (Path): Root directory of the repository to analyze.
+            file_index (list[dict[str, Any]]): Indexed file metadata used for file-size findings and distribution statistics.
+        
         Returns:
-            A list of complexity findings, each containing:
-                - ``type``: The type of complexity issue (str)
-                - ``file``: The relative file path (str, optional)
-                - ``description``: Description of the finding (str)
-                - ``value``: Numeric value if applicable (int or float, optional)
+            list[dict[str, Any]]: Findings from available complexity and code-quality tools, large-file heuristics, and file-size distribution statistics.
         """
         findings: list[dict[str, Any]] = []
 
@@ -72,13 +64,14 @@ class ComplexityAnalyzer:
         return findings
 
     def _run_radon(self, root: Path) -> list[dict[str, Any]]:
-        """Run radon cyclomatic complexity analysis on Python files.
-
+        """
+        Run Radon cyclomatic complexity analysis for the repository.
+        
         Args:
             root: The repository root path.
-
+        
         Returns:
-            A list of finding dicts from radon.
+            Findings for functions with cyclomatic complexity ranked C, D, E, or F.
         """
         import shutil
 
@@ -169,13 +162,14 @@ class ComplexityAnalyzer:
         return findings
 
     def _find_large_files(self, file_index: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Find files with excessive line counts.
-
-        Args:
-            file_index: The file index.
-
+        """
+        Identify files containing more than 500 lines.
+        
+        Parameters:
+            file_index: File metadata entries, including each file's path and line count.
+        
         Returns:
-            A list of finding dicts for large files.
+            Finding dictionaries for files exceeding the 500-line threshold.
         """
         findings: list[dict[str, Any]] = []
         for file_info in file_index:
@@ -193,13 +187,15 @@ class ComplexityAnalyzer:
         return findings
 
     def _line_count_distribution(self, file_index: list[dict[str, Any]]) -> dict[str, int]:
-        """Compute the distribution of file sizes.
-
-        Args:
-            file_index: The file index.
-
+        """
+        Count files in each line-count size category.
+        
+        Parameters:
+            file_index (list[dict[str, Any]]): File metadata containing optional line counts.
+        
         Returns:
-            A dict with counts for ``small``, ``medium``, ``large``, ``xlarge``.
+            dict[str, int]: Counts for ``small`` (<50), ``medium`` (50–199),
+                ``large`` (200–499), and ``xlarge`` (≥500) files.
         """
         dist: dict[str, int] = {"small": 0, "medium": 0, "large": 0, "xlarge": 0}
         for file_info in file_index:

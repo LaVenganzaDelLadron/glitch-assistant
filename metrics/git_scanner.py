@@ -32,23 +32,16 @@ class GitScanner:
         self._runner = command_runner or CommandRunner(timeout=30)
 
     def scan(self, repo_path: Path) -> dict[str, Any]:
-        """Run git analysis commands on the repository.
-
+        """
+        Analyze a repository's Git history, branches, files, contributors, tags, and working-tree state.
+        
         Args:
-            repo_path: Path to the cloned repository.
-
+            repo_path: Path to the repository to analyze.
+        
         Returns:
-            A dict containing git statistics:
-                - ``branch``: Current branch name (str)
-                - ``commit_count``: Total number of commits (int)
-                - ``last_commit``: Last commit message and hash (str)
-                - ``first_commit_date``: Date of the first commit (str)
-                - ``total_files_tracked``: Number of files tracked by git (int)
-                - ``contributors``: Number of unique authors (int)
-                - ``has_tags``: Whether the repo has tags (bool)
-                - ``is_dirty``: Whether the working tree is dirty (bool)
-                - ``branches``: List of branch names (list[str])
-                - ``findings``: list of finding dicts
+            A dictionary containing Git metadata and derived findings, including the current
+            branch, commit count, commit details, tracked file count, contributor count,
+            tag and cleanliness indicators, branch names, and finding records.
         """
         result: dict[str, Any] = {
             "branch": "unknown",

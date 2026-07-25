@@ -4,6 +4,8 @@ LLM generation, memory, and output formatting.
 
 from __future__ import annotations
 import logging
+from typing import Any
+
 from app.core.pipeline.input import parser
 from app.core.pipeline.memory import memory as memory_module
 from app.core.pipeline.reasoning import thinker
@@ -31,18 +33,29 @@ def run(user_input: str) -> str:
     Returns:
         The assistant's formatted response string.
     """
-    cleaned = parser.parse(user_input)
+    try:
+        cleaned = parser.parse(user_input)
 
-    history = memory_module.load()
+        history = memory_module.load()
 
-    decision = thinker.decide(cleaned)
+        decision = thinker.decide(cleaned)
 
-    tool_result: str | None = None
-    if decision.use_tool and decision.tool:
-        tool_result = decision.tool(cleaned)
-        logger.info("Tool returned: %.200s…", tool_result)
+        tool_result: str | None = None
+        if decision.use_tool and decision.tool:
+            logger.info("Executing tool for: %.60s", cleaned)
+            try:
+                tool_result = decision.tool(cleaned)
+                logger.info("Tool returned: %.200s…", tool_result)
+            except Exception as exc:
+                logger.exception("Tool execution failed")
+                tool_result = f"Error: Tool execution failed — {exc}"
 
-    response = groq.generate(cleaned, history, tool_result)
+        response = groq.generate(cleaned, history, tool_result)
 
-    memory_module.save(cleaned, response)
-    return formatter.format(response)
+        memory_module.save(cleaned, response)
+        return formatter.format(response)
+
+    except Exception as exc:
+        logger.exception("Pipeline error")
+        return f"I encountered an error: {exc}"
+

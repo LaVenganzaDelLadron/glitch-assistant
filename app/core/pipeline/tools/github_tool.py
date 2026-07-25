@@ -1,4 +1,17 @@
-"""GitHub analysis tool — wires up the full local clone → AI analysis pipeline."""
+"""GitHub analysis tool — wires up the full clone → scan → LLM analysis pipeline.
+
+This module is called by the pipeline when a GitHub repository URL or
+owner/repo identifier is detected. It:
+
+1. Clones the repository locally
+2. Indexes files, detects languages, scans dependencies
+3. Runs security, complexity, documentation, and git analysis
+4. Sends structured data to the LLM
+5. Returns the analysis result as a JSON string
+
+All command execution is handled by Python. The LLM only receives
+structured data and generates the report.
+"""
 
 from __future__ import annotations
 
@@ -29,7 +42,6 @@ def analyze_repository(raw_input: str) -> str:
         A JSON string containing the full analysis report, or an error JSON.
     """
     try:
-        # Load LLM settings from the application configuration
         from app.core.config.settings import get_settings
         settings = get_settings()
 
@@ -37,12 +49,11 @@ def analyze_repository(raw_input: str) -> str:
             llm_api_key=settings.api_key,
             llm_model=settings.model,
             llm_base_url=settings.base_url,
-            llm_timeout=settings.timeout,
+            llm_timeout=60 if isinstance(settings.timeout, (int, float)) else 60,
         )
 
         report = analyzer.analyze(raw_input)
 
-        # Serialize to dict
         report_dict = report.to_dict()
         logger.info(
             "Analysis complete — score: %d/100, issues: %d, recommendations: %d",
@@ -51,7 +62,6 @@ def analyze_repository(raw_input: str) -> str:
             len(report_dict.get("recommendations", [])),
         )
 
-        # Build a summarized result for the LLM
         result = {
             "analysis": report_dict,
             "summary": report_dict.get("summary", ""),

@@ -32,12 +32,16 @@ def decide(text: str) -> Decision:
     """
     try:
         lower = text.strip().lower()
-        # Trigger on common math-related keywords anywhere in the text
         math_triggers = ("calculate", "compute", "evaluate", "what is", "what's")
+        repo_triggers = ("scan", "analyze", "recommendation", "suggestion", "vulnerability")
         if any(trigger in lower for trigger in math_triggers):
             from app.core.pipeline.tools import calculator
-
             return Decision(use_tool=True, tool=calculator.execute)
+        if any(trigger in lower for trigger in repo_triggers):
+            from app.core.pipeline.tools import github_tool
+            return Decision(use_tool=True, tool=github_tool.analyze_repository)
+
+
         return Decision(use_tool=False)
     except Exception as exc:
         logger.exception("Error during intent classification")

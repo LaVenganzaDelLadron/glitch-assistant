@@ -3,12 +3,8 @@ from app.core.memory.conversation import ConversationMemory
 from app.core.memory.project import ProjectMemory
 from app.core.pipeline.context import PipelineContext
 from app.core.pipeline.pipeline import Pipeline
-from app.config.prompt import PromptLoader
 
 memory = ConversationMemory()
-memory.add_system(
-    PromptLoader.load("chat")
-)
 
 context = PipelineContext(
     llm=LLMFactory.create(),

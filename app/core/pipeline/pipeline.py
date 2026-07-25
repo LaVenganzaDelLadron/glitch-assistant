@@ -3,6 +3,7 @@ from __future__ import annotations
 from app.core.pipeline.context import PipelineContext
 from app.core.pipeline.router import Router
 from app.core.pipeline.executor import Executor
+from app.config.prompt import PromptLoader
 
 class Pipeline:
 
@@ -15,9 +16,13 @@ class Pipeline:
 
         route = self.router.route(prompt)
 
+        # Dynamically load the prompt template based on the user's intent
+        system_prompt = PromptLoader.load(route.prompts)
+
         return self.executor.execute(
             task=route.task,
             prompt=prompt,
             prompts=route.prompts,
             context=self.context,
+            system_prompt=system_prompt,
         )

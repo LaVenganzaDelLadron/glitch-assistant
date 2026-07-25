@@ -9,12 +9,13 @@ class Executor:
 
         self.chat = ChatAgent()
 
-    def execute(self, task, prompt, context, prompts=None):
+    def execute(self, task, prompt, context, prompts=None, system_prompt=None):
 
         if task == "chat":
             return self.chat.run(
                 prompt,
                 context,
+                system_prompt=system_prompt,
             )
 
         raise NotImplementedError(task)

@@ -24,18 +24,31 @@ class GroqProvider(LLMProvider):
 
         self.model = model
 
-    def generate(self, prompt, history=None, tool_result=None):
+    def generate(self, prompt, history=None, tool_result=None, system_prompt=None):
         messages = []
 
-        if history:
-            messages.extend(message.to_dict() for message in history)
+        # System prompt (route-specific, loaded dynamically) comes first
+        if system_prompt:
+            messages.append({
+                "role": "system",
+                "content": system_prompt,
+            })
 
+        # Conversation history (user/assistant/tool messages, no system messages stored)
+        if history:
+            messages.extend(
+                msg.to_dict() for msg in history
+                if msg.role != "system"
+            )
+
+        # Tool result as a system message (temporary context)
         if tool_result:
             messages.append({
                 "role": "system",
                 "content": tool_result,
             })
 
+        # Current user prompt
         messages.append({
             "role": "user",
             "content": prompt,

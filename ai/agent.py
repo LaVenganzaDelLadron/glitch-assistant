@@ -7,6 +7,8 @@ The agent works in an iterative loop:
 4. Request additional files when necessary.
 5. Iterate until enough information is gathered.
 6. Produce a comprehensive structured report.
+
+Uses :class:`ContextManager` to keep context within token budgets.
 """
 
 from __future__ import annotations
@@ -21,14 +23,16 @@ from openai import APIError, OpenAI
 from terminal.command_runner import CommandRunner, CommandResult
 from terminal.command_runner import DangerousCommandError as CmdDangerousError
 from terminal.command_runner import TimeoutError as CmdTimeoutError
+from app.core.pipeline.context import ContextManager
 
 logger = logging.getLogger(__name__)
 
 # Maximum number of analysis iterations.
 _MAX_ITERATIONS = 10
 
-# Size limit for tool result output sent to the LLM (characters).
-_MAX_TOOL_OUTPUT = 50_000
+# Default context limits for the agent.
+_DEFAULT_MAX_CONTEXT_TOKENS = 6000
+_DEFAULT_MAX_TOOL_OUTPUT_CHARS = 3000
 
 
 class AgentError(Exception):
@@ -57,6 +61,8 @@ class AIAgent:
         timeout: int,
         command_runner: CommandRunner,
         repo_path: Path,
+        max_context_tokens: int = _DEFAULT_MAX_CONTEXT_TOKENS,
+        max_tool_output_chars: int = _DEFAULT_MAX_TOOL_OUTPUT_CHARS,
     ) -> None:
         """Initialize the AI agent.
 
@@ -67,6 +73,8 @@ class AIAgent:
             timeout: Timeout in seconds for LLM API calls.
             command_runner: A :class:`CommandRunner` instance for executing commands.
             repo_path: Path to the cloned repository on disk.
+            max_context_tokens: Soft limit for total tokens sent to the LLM.
+            max_tool_output_chars: Max characters for any tool output.
         """
         self._api_key = api_key
         self._model = model
@@ -74,11 +82,20 @@ class AIAgent:
         self._timeout = timeout
         self._command_runner = command_runner
         self._repo_path = repo_path
+        self._max_context_tokens = max_context_tokens
+        self._max_tool_output_chars = max_tool_output_chars
 
         self._client = OpenAI(
             api_key=self._api_key,
             base_url=self._base_url,
             timeout=self._timeout,
+        )
+
+        # Context manager for token-aware context handling
+        self._context_manager = ContextManager(
+            max_context_tokens=max_context_tokens,
+            max_history_messages=20,
+            max_tool_output_chars=max_tool_output_chars,
         )
 
         # Conversation history for the iterative analysis.
@@ -109,12 +126,15 @@ class AIAgent:
             {"role": "system", "content": system_prompt},
         ]
 
-        # Build the initial context message
+        # Use ContextManager to compress the file index
+        compressed_file_index = self._context_manager.compress_file_list(file_index)
+
+        # Build the initial context message with compressed file index
         initial_context = (
             f"## Repository Location\n\n"
             f"The repository is cloned at: {self._repo_path}\n\n"
             f"## Analysis Instructions\n\n{analysis_instructions}\n\n"
-            f"## File Index\n\n{file_index_text}\n\n"
+            f"## File Index\n\n{compressed_file_index}\n\n"
             "You can execute terminal commands to explore the repository further. "
             "To run a command, respond with a JSON block like:\n\n"
             '```json\n{"action": "command", "command": ["ls", "-la"], "timeout": 30}\n```\n\n'
@@ -132,17 +152,45 @@ class AIAgent:
         for iteration in range(1, _MAX_ITERATIONS + 1):
             logger.info("Agent iteration %d/%d", iteration, _MAX_ITERATIONS)
 
+            # Estimate and log context size before each request
+            estimated = self._context_manager.estimate_tokens(self._messages)
+            logger.info(
+                "Context before iteration %d: %d messages, estimated %d tokens",
+                iteration,
+                len(self._messages),
+                estimated,
+            )
+
             try:
-                response = self._client.chat.completions.create(
+                # Use context manager to prepare messages for this request
+                prepared_messages = self._context_manager.prepare_context(
                     messages=self._messages,
+                )
+
+                response = self._client.chat.completions.create(
+                    messages=prepared_messages,
                     model=self._model,
                     temperature=0.3,
                 )
             except APIError as exc:
-                raise AgentError(f"LLM API error during analysis: {exc}") from exc
+                error_msg = str(exc).lower()
+                # Handle token limit error with retry
+                if "413" in error_msg or "request too large" in error_msg or "token" in error_msg:
+                    logger.warning("Token limit error, reducing context and retrying...")
+                    reduced_messages = self._context_manager.handle_token_limit_error(self._messages)
+                    try:
+                        response = self._client.chat.completions.create(
+                            messages=reduced_messages,
+                            model=self._model,
+                            temperature=0.3,
+                        )
+                    except APIError as retry_exc:
+                        raise AgentError(f"LLM API error after retry: {retry_exc}") from retry_exc
+                else:
+                    raise AgentError(f"LLM API error during analysis: {exc}") from exc
 
             reply = response.choices[0].message.content.strip()
-            logger.debug("Agent reply (%.200s…)", reply)
+            logger.debug("Agent reply (%.200s...)", reply)
 
             # Try to parse the reply as JSON
             parsed = self._parse_json_action(reply)
@@ -156,16 +204,20 @@ class AIAgent:
 
             if action == "command":
                 result = self._handle_command_action(parsed)
+                # Compress the command result
+                compressed_result = self._context_manager.compress_tool_result(result)
                 self._messages.append({
                     "role": "user",
-                    "content": f"Command result:\n{result}",
+                    "content": f"Command result:\n{compressed_result}",
                 })
 
             elif action == "read_file":
                 result = self._handle_read_file_action(parsed, file_index)
+                # Compress file content if needed
+                compressed_result = self._context_manager.compress_tool_result(result)
                 self._messages.append({
                     "role": "user",
-                    "content": f"File contents:\n{result}",
+                    "content": f"File contents:\n{compressed_result}",
                 })
 
             elif action == "report":
@@ -271,15 +323,14 @@ class AIAgent:
 
         output = f"Exit code: {result.return_code}\n"
         if result.stdout:
-            # Truncate stdout if too long
             stdout = result.stdout
-            if len(stdout) > _MAX_TOOL_OUTPUT:
-                stdout = stdout[:_MAX_TOOL_OUTPUT] + "\n\n# ... [TRUNCATED]"
+            if len(stdout) > self._max_tool_output_chars:
+                stdout = stdout[:self._max_tool_output_chars] + "\n\n# ... [TRUNCATED]"
             output += f"stdout:\n{stdout}\n"
         if result.stderr:
             stderr = result.stderr
-            if len(stderr) > _MAX_TOOL_OUTPUT:
-                stderr = stderr[:_MAX_TOOL_OUTPUT] + "\n\n# ... [TRUNCATED]"
+            if len(stderr) > self._max_tool_output_chars:
+                stderr = stderr[:self._max_tool_output_chars] + "\n\n# ... [TRUNCATED]"
             output += f"stderr:\n{stderr}\n"
 
         return output
@@ -325,10 +376,9 @@ class AIAgent:
         except (UnicodeDecodeError, OSError) as exc:
             return f"Error: Could not read file '{relative_path}': {exc}"
 
-        # Truncate very large files
-        max_chars = 50_000
-        if len(content) > max_chars:
-            content = content[:max_chars] + "\n\n# ... [TRUNCATED]"
+        # Truncate very large files using configurable limit
+        if len(content) > self._max_tool_output_chars:
+            content = content[:self._max_tool_output_chars] + "\n\n# ... [TRUNCATED]"
 
         self._loaded_files.add(relative_path)
 
@@ -357,8 +407,10 @@ class AIAgent:
         })
 
         try:
+            # Ensure context fits before forcing report
+            prepared = self._context_manager.prepare_context(messages=self._messages)
             response = self._client.chat.completions.create(
-                messages=self._messages,
+                messages=prepared,
                 model=self._model,
                 temperature=0.3,
             )
@@ -382,4 +434,3 @@ class AIAgent:
                 "issues": [],
                 "recommendations": [],
             }
-

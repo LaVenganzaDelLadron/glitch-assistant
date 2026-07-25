@@ -1,4 +1,8 @@
-"""Prompt builder — constructs structured context for the LLM analysis prompt."""
+"""Prompt builder — constructs structured context for the LLM analysis prompt.
+
+Limits file index size to avoid token overflow. Only important files are
+sent in full; the rest are summarized.
+"""
 
 from __future__ import annotations
 
@@ -153,6 +157,10 @@ class PromptBuilder:
     ) -> dict[str, Any]:
         """Build a lightweight summary of the file index (without full content).
 
+        Limits the number of files sent to the LLM to avoid token overflow.
+        Important files (config, entry points, README) are always included.
+        Remaining files are sampled up to a configurable maximum.
+
         Args:
             file_index: The complete file index (with content).
 
@@ -162,7 +170,7 @@ class PromptBuilder:
                 - ``total_lines``: int
                 - ``total_size_bytes``: int
                 - ``directories``: list of top-level directories
-                - ``file_list``: list of dicts with path, extension, size, lines (no content)
+                - ``file_list``: truncated list of file metadata
         """
         total_lines = 0
         total_size = 0
@@ -186,6 +194,39 @@ class PromptBuilder:
                 "lines": f.get("lines", 0),
             })
 
+        # Limit file list to avoid sending huge context (max ~100 files)
+        MAX_FILES_IN_CONTEXT = 100
+        if len(file_list) > MAX_FILES_IN_CONTEXT:
+            important_files: list[dict[str, Any]] = []
+            other_files: list[dict[str, Any]] = []
+            for f in file_list:
+                path_lower = f.get("path", "").lower()
+                if any(kw in path_lower for kw in [
+                    "readme", "setup", "config", "main", "index",
+                    "dockerfile", "makefile", "package", "requirements",
+                    ".gitignore", "license", "contributing",
+                ]):
+                    important_files.append(f)
+                else:
+                    other_files.append(f)
+
+            # Keep all important files + sample of other files
+            sample_size = MAX_FILES_IN_CONTEXT - len(important_files)
+            if sample_size > 0 and other_files:
+                other_files = other_files[:sample_size]
+
+            file_list = important_files + other_files
+
+            # Add summary note at end
+            remaining = len(file_index) - len(file_list)
+            if remaining > 0:
+                file_list.append({
+                    "path": f"... and {remaining} more files (total: {len(file_index)})",
+                    "extension": "",
+                    "size": 0,
+                    "lines": 0,
+                })
+
         return {
             "total_files": len(file_index),
             "total_lines": total_lines,
@@ -193,4 +234,3 @@ class PromptBuilder:
             "directories": sorted(directories),
             "files": file_list,
         }
-

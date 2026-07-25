@@ -9,18 +9,19 @@ logger = logging.getLogger(__name__)
 
 
 def generate(prompt: str, history: list[dict[str, str]], tool_result: str | None = None) -> str:
-    """Send a prompt with conversation history to the LLM and return the response.
-
+    """Send a prompt and conversation history to the language model.
+    
     Args:
         prompt: The current user input.
-        history: A list of previous message dicts (role/content pairs).
-        tool_result: Optional result from a tool execution to include in context.
-
+        history: Previous conversation messages represented as role/content mappings.
+        tool_result: Optional tool execution result to include in the conversation context.
+    
     Returns:
-        The model's response text, stripped of leading/trailing whitespace.
-
+        The model's response text with leading and trailing whitespace removed.
+    
     Raises:
-        LLMError: If configuration is invalid, the dependency is missing, or the API call fails.
+        LLMError: If the prompt is empty, configuration is invalid, the required
+            dependency is unavailable, or the language model request fails.
     """
     if not prompt or not prompt.strip():
         raise LLMError("Prompt cannot be empty.")

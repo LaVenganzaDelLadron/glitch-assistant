@@ -16,22 +16,14 @@ logger = logging.getLogger(__name__)
 
 
 def run(user_input: str) -> str:
-    """Process a user input through the full assistant pipeline.
-
-    Steps:
-        1. Parse / clean the input.
-        2. Load conversation history from memory.
-        3. Decide whether a tool should handle the input.
-        4. If a tool is selected, execute it and capture the result.
-        5. Send the prompt, history, and optional tool result to the LLM.
-        6. Save the exchange to memory.
-        7. Format and return the final response.
-
+    """
+    Process user input through parsing, memory, tool selection, response generation, and formatting.
+    
     Args:
-        user_input: Raw text from the user.
-
+        user_input: Raw text provided by the user.
+    
     Returns:
-        The assistant's formatted response string.
+        The formatted assistant response, or an error message if the pipeline fails.
     """
     try:
         cleaned = parser.parse(user_input)

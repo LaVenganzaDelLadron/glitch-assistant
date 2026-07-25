@@ -125,13 +125,21 @@ class PromptBuilder:
         git_info: dict[str, Any],
         dependencies: list[dict[str, Any]],
     ) -> dict[str, Any]:
-        """Build the structured context dictionary for the LLM.
-
+        """Assemble repository metadata into a structured context for LLM analysis.
+        
         Args:
-            See :meth:`build_analysis_prompt`.
-
+            repo_id: Repository identifier.
+            languages: Language distribution for the repository.
+            file_index: Per-file metadata used to summarize the repository structure.
+            statistics: Repository statistics.
+            security: Security findings.
+            complexity: Complexity findings.
+            documentation: Documentation analysis results.
+            git_info: Git repository metadata.
+            dependencies: Dependency file information.
+        
         Returns:
-            A dict containing only structured data — no prompts or instructions.
+            A dictionary containing the repository metadata and file structure summary.
         """
         # Summarize file index (don't include full content to keep context size manageable)
         file_summary = self._summarize_file_index(file_index)
@@ -151,18 +159,15 @@ class PromptBuilder:
     def _summarize_file_index(
         self, file_index: list[dict[str, Any]]
     ) -> dict[str, Any]:
-        """Build a lightweight summary of the file index (without full content).
-
+        """Create a compact summary of file metadata without including file contents.
+        
         Args:
-            file_index: The complete file index (with content).
-
+            file_index: File metadata entries to summarize.
+        
         Returns:
-            A summary dict with:
-                - ``total_files``: int
-                - ``total_lines``: int
-                - ``total_size_bytes``: int
-                - ``directories``: list of top-level directories
-                - ``file_list``: list of dicts with path, extension, size, lines (no content)
+            A dictionary containing file count, total line count, total size in
+            bytes, sorted top-level directories, and per-file metadata for path,
+            extension, size, and line count.
         """
         total_lines = 0
         total_size = 0

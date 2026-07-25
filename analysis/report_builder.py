@@ -109,18 +109,17 @@ class ReportBuilder:
         return report
 
     def _parse_json(self, text: str) -> dict[str, Any] | None:
-        """Attempt to parse a JSON response from the LLM.
-
-        Tries:
-            1. Direct ``json.loads`` on the raw text.
-            2. Extract JSON from markdown code blocks (```json ... ```).
-            3. Extract JSON from any code block (``` ... ```).
-
+        """
+        Parse an LLM response into a JSON object.
+        
+        The response may contain raw JSON, JSON in a Markdown code block, or a
+        JSON object embedded in surrounding text.
+        
         Args:
             text: The LLM response text.
-
+        
         Returns:
-            A parsed dict, or ``None`` if parsing fails.
+            The parsed JSON object, or ``None`` if no valid JSON object is found.
         """
         # Strategy 1: Direct parse
         try:

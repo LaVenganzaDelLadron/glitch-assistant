@@ -162,20 +162,21 @@ class CommandRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
     ) -> CommandResult:
-        """Execute a command and return the result.
-
+        """Execute a command and capture its output and exit status.
+        
         Args:
-            command: The command and its arguments as a sequence (e.g. ``["ls", "-la"]``).
-            cwd: Working directory for the command. If ``None``, uses current directory.
-            timeout: Override the default timeout in seconds.
-
+            command: The executable and its arguments.
+            cwd: Working directory for the command.
+            timeout: Maximum execution time in seconds, overriding the default when provided.
+        
         Returns:
-            A :class:`CommandResult` with stdout, stderr, and return code.
-
+            A CommandResult containing captured stdout, stderr, the exit code, and command arguments.
+        
         Raises:
-            DangerousCommandError: If the command's base executable is in the blocklist.
-            TimeoutError: If the command exceeds the timeout.
-            FileNotFoundError: If the command executable does not exist.
+            ValueError: If command is empty.
+            DangerousCommandError: If the executable is prohibited.
+            TimeoutError: If execution exceeds the configured timeout.
+            FileNotFoundError: If the executable is unavailable.
         """
         if not command:
             raise ValueError("Command sequence must not be empty")
@@ -254,16 +255,13 @@ class CommandRunner:
         return None
 
     def _validate_command(self, executable: str) -> None:
-        """Check if the command's base executable is in the dangerous blocklist.
-
-        Also checks if the command is in the allowed list (if it's a non-standard
-        command that might be dangerous).
-
+        """Validate an executable against the blocked command list.
+        
         Args:
-            executable: The command executable name or path.
-
+            executable: The executable name or path to validate.
+        
         Raises:
-            DangerousCommandError: If the executable is dangerous.
+            DangerousCommandError: If the executable is blocked for security reasons.
         """
         base = Path(executable).name
         if base in _DANGEROUS_COMMANDS:

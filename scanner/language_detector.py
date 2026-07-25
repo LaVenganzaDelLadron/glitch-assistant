@@ -128,16 +128,15 @@ class LanguageDetector:
     """Detects programming languages present in a repository from its file index."""
 
     def detect(self, file_index: list[dict[str, Any]]) -> dict[str, float]:
-        """Detect languages from a file index.
-
-        Counts files per language and returns the percentage distribution.
-
-        Args:
-            file_index: A list of file metadata dicts (from :class:`FileIndexer`).
-
+        """
+        Determine the percentage distribution of recognized languages in a file index.
+        
+        Parameters:
+            file_index (list[dict[str, Any]]): File metadata entries to analyze.
+        
         Returns:
-            A dict mapping language names to their percentage of total files.
-            Only languages with >= 1% are included.
+            dict[str, float]: Language names mapped to their percentages among recognized
+            files, sorted in descending order and excluding values below 1%.
         """
         if not file_index:
             return {}

@@ -35,16 +35,16 @@ class Decision:
 
 
 def decide(text: str) -> Decision:
-    """Classify user intent and return the appropriate Decision.
-
-    Uses regex to detect GitHub repositories, plus keyword matching for
-    math expressions and analysis requests.
-
+    """
+    Classify user intent and select the appropriate tool, when applicable.
+    
     Args:
-        text: The cleaned user input string.
-
+        text: User input to classify.
+    
     Returns:
-        A Decision indicating whether a tool should be invoked.
+        A decision identifying whether to invoke a repository-analysis or
+        calculator tool. Returns a decision with tool invocation disabled when no
+        supported intent is detected or classification fails.
     """
     try:
         lower = text.strip().lower()

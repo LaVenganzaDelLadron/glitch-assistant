@@ -3,6 +3,7 @@ from app.core.memory.conversation import ConversationMemory
 from app.core.memory.project import ProjectMemory
 from app.core.pipeline.context import PipelineContext
 from app.core.pipeline.pipeline import Pipeline
+from app.tools import registry
 
 memory = ConversationMemory()
 
@@ -12,9 +13,10 @@ context = PipelineContext(
     project=ProjectMemory(),
 )
 
-pipeline = Pipeline(context)
+pipeline = Pipeline(context, registry=registry)
 
 while True:
+    print("\n\n")
     prompt = input("You: ")
 
     if prompt == "exit":
@@ -22,3 +24,4 @@ while True:
 
     response = pipeline.run(prompt)
     print("Content: ", response.content)
+

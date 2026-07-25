@@ -19,11 +19,21 @@ class ConversationMemory:
             )
         )
 
-    def add_assistant(self, content: str) -> None:
+    def add_assistant(self, content: str, tool_calls: list | None = None) -> None:
         self.add(
             Message(
                 role="assistant",
                 content=content,
+                tool_calls=tool_calls or [],
+            )
+        )
+
+    def add_tool(self, content: str, tool_call_id: str) -> None:
+        self.add(
+            Message(
+                role="tool",
+                content=content,
+                tool_call_id=tool_call_id,
             )
         )
 

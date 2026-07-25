@@ -4,13 +4,15 @@ from app.core.pipeline.context import PipelineContext
 from app.core.pipeline.router import Router
 from app.core.pipeline.executor import Executor
 from app.config.prompt import PromptLoader
+from app.tools.registry import ToolRegistry
+
 
 class Pipeline:
 
-    def __init__(self, context: PipelineContext):
+    def __init__(self, context: PipelineContext, registry: ToolRegistry | None = None):
         self.context = context
         self.router = Router()
-        self.executor = Executor()
+        self.executor = Executor(registry=registry)
 
     def run(self, prompt: str):
 

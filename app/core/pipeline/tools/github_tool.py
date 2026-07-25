@@ -1,62 +1,83 @@
-import re
+"""GitHub analysis tool — wires up the full local clone → AI analysis pipeline."""
 
-from app.github.client import GithubClient
-from app.github.scanner import GithubScanner
-from app.github.analyzer import RepoAnalyzer
-from app.github.suggester import SuggestionGenerator
+from __future__ import annotations
 
-# Pattern to match GitHub URLs or bare owner/repo strings.
-_REPO_PATTERN = re.compile(
-    r"(?:https?://(?:www\.)?github\.com/)?([a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+)"
-)
+import json
+import logging
+from typing import Any
 
+from analysis.analyzer import RepoAnalyzer, AnalysisError
 
-def _extract_repo(text: str) -> str | None:
-    """Try to extract a ``owner/repo`` identifier from the given text.
-
-    Supports:
-        - Full URLs: ``https://github.com/owner/repo``
-        - Bare identifiers: ``owner/repo``
-        - Natural language: ``"analyze my repo: https://github.com/owner/repo"``
-
-    Returns:
-        The ``owner/repo`` string, or ``None`` if no match is found.
-    """
-    match = _REPO_PATTERN.search(text)
-    if match:
-        return match.group(1)
-    return None
+logger = logging.getLogger(__name__)
 
 
-def analyze_repository(raw_input: str) -> dict | None:
-    """Scan, analyze and suggest improvements for a GitHub repository.
+def analyze_repository(raw_input: str) -> str:
+    """Analyze a GitHub repository by cloning it locally and using AI.
 
     Accepts the raw user input and automatically extracts the repository
     identifier (``owner/repo``) from URLs or plain text.
+
+    This function is called by the pipeline tool dispatcher. It loads the
+    LLM configuration from settings, initializes the :class:`RepoAnalyzer`,
+    and returns the analysis report as a JSON string suitable for inclusion
+    in the LLM context.
 
     Args:
         raw_input: User input that contains a GitHub repo URL or identifier.
 
     Returns:
-        A dict with ``analysis`` and ``suggestion`` keys, or ``None``
-        when the input could not be parsed.
+        A JSON string containing the full analysis report, or an error JSON.
     """
-    repo = _extract_repo(raw_input)
-    if repo is None:
-        return {
-            "analysis": {"error": "Could not extract a GitHub repository from the input."},
-            "suggestion": {"suggestions": []},
+    try:
+        # Load LLM settings from the application configuration
+        from app.core.config.settings import get_settings
+        settings = get_settings()
+
+        analyzer = RepoAnalyzer(
+            llm_api_key=settings.api_key,
+            llm_model=settings.model,
+            llm_base_url=settings.base_url,
+            llm_timeout=settings.timeout,
+        )
+
+        report = analyzer.analyze(raw_input)
+
+        # Serialize to dict
+        report_dict = report.to_dict()
+        logger.info(
+            "Analysis complete — score: %d/100, issues: %d, recommendations: %d",
+            report_dict.get("score", 0),
+            len(report_dict.get("issues", [])),
+            len(report_dict.get("recommendations", [])),
+        )
+
+        # Build a summarized result for the LLM
+        result = {
+            "analysis": report_dict,
+            "summary": report_dict.get("summary", ""),
+            "score": report_dict.get("score", 0),
+            "suggestion": {
+                "recommendations": report_dict.get("recommendations", []),
+                "strengths": report_dict.get("strengths", []),
+            },
         }
 
-    client = GithubClient()
-    scanner = GithubScanner(client)
-    analyzer = RepoAnalyzer()
-    suggester = SuggestionGenerator()
-    repository = scanner.scan(repo)
-    analysis = analyzer.analyze(repository)
-    suggestion = suggester.generate(analysis)
+        return json.dumps(result, indent=2, ensure_ascii=False)
 
-    return {
-        "analysis": analysis,
-        "suggestion": suggestion,
-    }
+    except AnalysisError as exc:
+        logger.error("Analysis failed: %s", exc)
+        return json.dumps({
+            "analysis": {"error": str(exc)},
+            "summary": f"Analysis failed: {exc}",
+            "score": 0,
+            "suggestion": {"recommendations": [], "strengths": []},
+        })
+    except Exception as exc:
+        logger.exception("Unexpected error during repository analysis")
+        return json.dumps({
+            "analysis": {"error": f"Unexpected error: {exc}"},
+            "summary": f"An unexpected error occurred: {exc}",
+            "score": 0,
+            "suggestion": {"recommendations": [], "strengths": []},
+        })
+

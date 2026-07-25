@@ -13,10 +13,11 @@ class Pipeline:
 
     def run(self, prompt: str):
 
-        task = self.router.route(prompt)
+        route = self.router.route(prompt)
 
         return self.executor.execute(
-            task=task,
+            task=route.task,
             prompt=prompt,
+            prompts=route.prompts,
             context=self.context,
         )

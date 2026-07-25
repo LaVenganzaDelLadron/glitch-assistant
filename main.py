@@ -7,7 +7,7 @@ from app.config.prompt import PromptLoader
 
 memory = ConversationMemory()
 memory.add_system(
-    PromptLoader.load("system")
+    PromptLoader.load("chat")
 )
 
 context = PipelineContext(

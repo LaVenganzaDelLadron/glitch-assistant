@@ -9,7 +9,7 @@ class Executor:
 
         self.chat = ChatAgent()
 
-    def execute(self, task, prompt, context):
+    def execute(self, task, prompt, context, prompts=None):
 
         if task == "chat":
             return self.chat.run(

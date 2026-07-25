@@ -1,57 +1,28 @@
-"""Entry point — interactive REPL and single-prompt modes."""
+from app.core.ai.factory import LLMFactory
+from app.core.memory.conversation import ConversationMemory
+from app.core.memory.project import ProjectMemory
+from app.core.pipeline.context import PipelineContext
+from app.core.pipeline.pipeline import Pipeline
+from app.config.prompt import PromptLoader
 
-from __future__ import annotations
-import logging
-import sys
-from app.core.pipeline.pipeline import run
-
-logging.basicConfig(
-    level=logging.WARNING,
-    format="%(levelname)s %(name)s %(message)s",
-    stream=sys.stderr,
+memory = ConversationMemory()
+memory.add_system(
+    PromptLoader.load("system")
 )
 
+context = PipelineContext(
+    llm=LLMFactory.create(),
+    conversation=memory,
+    project=ProjectMemory(),
+)
 
-def _repl() -> None:
-    """Run the interactive read-eval-print loop."""
-    print("Glitch Assistant — type 'exit' to quit.\n")
-    while True:
-        try:
-            user_input = input("Chat: ")
-        except (EOFError, KeyboardInterrupt):
-            print()
-            break
+pipeline = Pipeline(context)
 
-        if not user_input:
-            continue
+while True:
+    prompt = input("You: ")
 
-        normalized = user_input.strip().lower()
-        if normalized in ("exit", "quit"):
-            break
+    if prompt == "exit":
+        break
 
-        try:
-            response = run(user_input)
-            print(f"AI: {response}\n")
-        except Exception as exc:
-            logging.getLogger(__name__).exception("Unhandled error")
-            print(f"AI: Sorry, something went wrong — {exc}\n")
-
-
-def main() -> None:
-    """Dispatch to REPL or single-shot mode based on CLI arguments."""
-    if len(sys.argv) > 1:
-        # Single-shot: python main.py "your prompt"
-        prompt = " ".join(sys.argv[1:])
-        try:
-            response = run(prompt)
-            print(response)
-        except Exception as exc:
-            logging.getLogger(__name__).exception("Unhandled error")
-            print(f"Error: {exc}", file=sys.stderr)
-            sys.exit(1)
-    else:
-        _repl()
-
-
-if __name__ == "__main__":
-    main()
+    response = pipeline.run(prompt)
+    print("Content: ", response.content)

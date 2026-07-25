@@ -1,34 +1,51 @@
-import requests
+"""GitHub client — extracts owner/repo identifiers from user input."""
 
-GITHUB_API_BASE = "https://api.github.com"
+from __future__ import annotations
+
+import re
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Pattern to match GitHub URLs or bare owner/repo strings.
+_REPO_PATTERN = re.compile(
+    r"(?:https?://(?:www\.)?github\.com/)?([a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+)"
+)
 
 
 class GithubClient:
+    """Minimal client that parses GitHub repository identifiers from text."""
 
-    def get_repository(self, repo: str) -> dict:
-        """Get repository metadata from the GitHub API.
+    def extract_repo(self, text: str) -> str | None:
+        """Extract an ``owner/repo`` identifier from the given text.
 
-        Args:
-            repo: Repository identifier in the format ``owner/repo``.
-
-        Returns:
-            Repository metadata as a dict.
-        """
-        url = f"{GITHUB_API_BASE}/repos/{repo}"
-        response = requests.get(url)
-        response.raise_for_status()
-        return response.json()
-
-    def get_contents(self, repo: str) -> list[dict]:
-        """Get the top-level file listing of a repository.
+        Supports:
+            - Full URLs: ``https://github.com/owner/repo``
+            - Bare identifiers: ``owner/repo``
+            - Natural language: ``"analyze my repo: https://github.com/owner/repo"``
 
         Args:
-            repo: Repository identifier in the format ``owner/repo``.
+            text: A raw user input string.
 
         Returns:
-            List of file metadata dicts.
+            The ``owner/repo`` string, or ``None`` if no match is found.
         """
-        url = f"{GITHUB_API_BASE}/repos/{repo}/contents"
-        response = requests.get(url)
-        response.raise_for_status()
-        return response.json()
+        match = _REPO_PATTERN.search(text)
+        if match:
+            repo = match.group(1)
+            logger.info("Extracted repository identifier: %s", repo)
+            return repo
+        logger.warning("Could not extract repository identifier from: %.60s…", text)
+        return None
+
+    def build_clone_url(self, repo: str) -> str:
+        """Build an HTTPS clone URL from an owner/repo identifier.
+
+        Args:
+            repo: A repository identifier in ``owner/repo`` format.
+
+        Returns:
+            An HTTPS clone URL string.
+        """
+        return f"https://github.com/{repo}.git"
+

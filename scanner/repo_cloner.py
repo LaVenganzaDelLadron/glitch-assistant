@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import subprocess
 import tempfile
@@ -58,12 +59,19 @@ class RepoCloner:
         self._temp_dir = Path(tempfile.mkdtemp(prefix="glitch_repo_"))
         logger.info("Cloning %s into temporary directory %s", url, self._temp_dir)
 
+        # Build environment with credential prompts disabled.
+        # GIT_TERMINAL_PROMPT=0 tells git not to prompt for credentials;
+        # GIT_ASKPASS=echo provides a non-interactive askpass that always fails,
+        # preventing git from blocking on /dev/tty even if the URL is invalid.
+        env = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "echo"}
+
         try:
             result = subprocess.run(
                 ["git", "clone", "--depth", "1", url, str(self._temp_dir)],
                 capture_output=True,
                 text=True,
                 timeout=self._timeout,
+                env=env,
             )
         except subprocess.TimeoutExpired:
             self._cleanup()

@@ -28,11 +28,18 @@ class GithubClient:
             text: A raw user input string.
 
         Returns:
-            The ``owner/repo`` string, or ``None`` if no match is found.
+            The ``owner/repo`` string (with ``.git`` suffix stripped), or ``None``
+            if no match is found.
         """
         match = _REPO_PATTERN.search(text)
         if match:
             repo = match.group(1)
+            # Strip trailing .git or .git/ suffix if present to avoid
+            # double .git when build_clone_url appends it.
+            if repo.endswith(".git"):
+                repo = repo[:-4]
+            elif repo.endswith(".git/"):
+                repo = repo[:-5]
             logger.info("Extracted repository identifier: %s", repo)
             return repo
         logger.warning("Could not extract repository identifier from: %.60s…", text)

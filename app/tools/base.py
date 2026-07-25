@@ -7,9 +7,27 @@ from typing import Any, Callable
 
 @dataclass(slots=True)
 class ToolResult:
+    """Result returned by any tool operation.
+
+    Every tool must return a ToolResult. The compression layer
+    (output_compressor) is applied before this is stored in conversation
+    memory or sent to the LLM.
+    """
     success: bool
-    output: Any = None
+    content: str = ""
     error: str | None = None
+    truncated: bool = False
+    original_length: int = 0
+    metadata: dict = field(default_factory=dict)
+
+    @property
+    def output(self) -> str:
+        """Backward-compatible alias for content."""
+        return self.content
+
+    @output.setter
+    def output(self, value: str) -> None:
+        self.content = value
 
 
 @dataclass(slots=True)

@@ -1,4 +1,5 @@
 #app/core/ai/groq.py
+from __future__ import annotations
 from app.core.ai.base import LLMProvider
 from dotenv import load_dotenv
 from app.core.models.response import AIResponse
@@ -6,6 +7,7 @@ from app.core.models.usage import Usage
 from app.core.models.tool_call import ToolCall
 
 load_dotenv()
+
 
 class GroqProvider(LLMProvider):
     def __init__(
@@ -26,36 +28,45 @@ class GroqProvider(LLMProvider):
         self.model = model
 
     def generate(self, prompt, history=None, tool_result=None, system_prompt=None, tools=None):
-        messages = []
+        """Generate a response from the LLM.
 
-        # System prompt (route-specific, loaded dynamically) comes first
+        IMPORTANT: The caller (Executor) is responsible for storing messages
+        into ConversationMemory. This method uses `history` as the SOLE source
+        of messages, avoiding duplicate user messages. The `prompt` param is
+        only used as a fallback when no history is provided.
+        """
+        messages: list[dict] = []
+
+        # System prompt (loaded dynamically per route) comes first
         if system_prompt:
             messages.append({
                 "role": "system",
                 "content": system_prompt,
             })
 
-        # Conversation history (user/assistant/tool messages, no system messages stored)
+        # History is the authoritative message list — includes user, assistant, tool
         if history:
-            messages.extend(
-                msg.to_dict() for msg in history
-                if msg.role != "system"
-            )
+            for msg in history:
+                d = msg.to_dict()
+                # Skip any stale system messages from memory (we prepend fresh one above)
+                if d["role"] == "system":
+                    continue
+                messages.append(d)
+        else:
+            # No history: use prompt as a standalone user message
+            messages.append({
+                "role": "user",
+                "content": prompt,
+            })
 
-        # Tool result as a system message (temporary context)
+        # Tool result injected as a system hint (for legacy compatibility)
         if tool_result:
             messages.append({
                 "role": "system",
                 "content": tool_result,
             })
 
-        # Current user prompt
-        messages.append({
-            "role": "user",
-            "content": prompt,
-        })
-
-        kwargs = {
+        kwargs: dict = {
             "model": self.model,
             "messages": messages,
         }
@@ -70,7 +81,7 @@ class GroqProvider(LLMProvider):
         message = choice.message
 
         # Parse tool calls from the response
-        tool_calls = []
+        tool_calls: list[ToolCall] = []
         if message.tool_calls:
             for tc in message.tool_calls:
                 tool_calls.append(

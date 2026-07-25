@@ -2,6 +2,7 @@
 from __future__ import annotations
 from pathlib import Path
 from app.tools.base import Tool, ToolResult, ToolOperation
+from app.core.utils.output_compressor import compress_output
 
 
 class FileSystemTool(Tool):
@@ -11,13 +12,23 @@ class FileSystemTool(Tool):
 
     def read_file(self, path: str) -> ToolResult:
         try:
+            raw_content = Path(path).read_text(encoding="utf-8")
+            compressed = compress_output(raw_content)
+
             return ToolResult(
                 success=True,
-                output=Path(path).read_text(encoding="utf-8"),
+                content=compressed.content,
+                truncated=compressed.truncated,
+                original_length=compressed.original_length,
+                metadata={
+                    "path": path,
+                    "original_type": compressed.original_type,
+                },
             )
         except Exception as e:
             return ToolResult(
                 success=False,
+                content="",
                 error=str(e),
             )
 
@@ -26,11 +37,12 @@ class FileSystemTool(Tool):
             Path(path).write_text(content, encoding="utf-8")
             return ToolResult(
                 success=True,
-                output="File written successfully.",
+                content="File written successfully.",
             )
         except Exception as e:
             return ToolResult(
                 success=False,
+                content="",
                 error=str(e),
             )
 
@@ -38,23 +50,26 @@ class FileSystemTool(Tool):
         try:
             return ToolResult(
                 success=True,
-                output=Path(path).exists(),
+                content=str(Path(path).exists()),
             )
         except Exception as e:
             return ToolResult(
                 success=False,
+                content="",
                 error=str(e),
             )
 
     def list_directory(self, path: str) -> ToolResult:
         try:
+            items = [str(p) for p in Path(path).iterdir()]
             return ToolResult(
                 success=True,
-                output=[str(p) for p in Path(path).iterdir()],
+                content="\n".join(items) if items else "(empty directory)",
             )
         except Exception as e:
             return ToolResult(
                 success=False,
+                content="",
                 error=str(e),
             )
 
@@ -62,7 +77,7 @@ class FileSystemTool(Tool):
         return [
             ToolOperation(
                 name=f"{self.name}.read_file",
-                description="Read the contents of a file at the given path.",
+                description="Read the contents of a file at the given path. Large files are automatically summarized.",
                 parameters={
                     "type": "object",
                     "properties": {

@@ -9,6 +9,18 @@ class Router:
 
         text = user_input.lower()
 
+        if "security" in text:
+            return Route(
+                task="security",
+                prompts="security",
+            )
+
+        if "planner" in text:
+            return Route(
+                task="planner",
+                prompts="planner",
+            )
+
         if "review" in text:
             return Route(
                 task="review",

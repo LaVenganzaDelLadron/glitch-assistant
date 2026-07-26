@@ -15,15 +15,17 @@ class Executor:
         self.max_tool_output_chars = int(settings.max_tool_output_chars)
 
     def execute(self, task, prompt, context, prompts=None, system_prompt=None):
+        """Execute a prompt with the given task context.
 
-        if task == "chat":
-            return self._execute_tool_loop(
-                prompt=prompt,
-                context=context,
-                system_prompt=system_prompt,
-            )
-
-        raise NotImplementedError(task)
+        The task type determines which system prompt is loaded (via the Router),
+        but all tasks are handled by the same tool-calling loop. The system prompt
+        content itself tailors the AI's behavior for the specific task.
+        """
+        return self._execute_tool_loop(
+            prompt=prompt,
+            context=context,
+            system_prompt=system_prompt,
+        )
 
     def _execute_tool_loop(self, prompt, context, system_prompt=None):
         """Run the tool-calling loop.

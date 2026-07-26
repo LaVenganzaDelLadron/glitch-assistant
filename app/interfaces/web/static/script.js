@@ -2,18 +2,18 @@
 (function () {
     'use strict';
 
-    const chatContainer = document.getElementById('chat-container');
-    const messageInput = document.getElementById('message-input');
-    const sendBtn = document.getElementById('send-btn');
-    const loading = document.getElementById('loading');
-    const newChatBtn = document.getElementById('new-chat-btn');
+    var chatContainer = document.getElementById('chat-container');
+    var messageInput = document.getElementById('message-input');
+    var sendBtn = document.getElementById('send-btn');
+    var loading = document.getElementById('loading');
+    var newChatBtn = document.getElementById('new-chat-btn');
 
     // Markdown renderer with pipe-to-table support
     function renderMarkdown(text) {
         if (!text) return '';
 
         // Escape HTML
-        let html = text
+        var html = text
             .replace(/&/g, '&amp;')
             .replace(/</g, '<')
             .replace(/>/g, '>');
@@ -45,7 +45,7 @@
         // Horizontal rules
         html = html.replace(/^---$/gm, '<hr>');
 
-        // ── Table rendering ──────────────────────────────
+        // Table rendering - pipe-delimited markdown tables
         html = html.replace(
             /((?:^[^\n]*\|[^\n]*\n?)+\n?)/gm,
             function (block) {

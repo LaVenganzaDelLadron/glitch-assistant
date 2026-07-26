@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from app.core.models.response import AIResponse
 from app.core.models.usage import Usage
 from app.core.models.tool_call import ToolCall
+from app.core.memory.conversation import ConversationMemory
+from app.core.pipeline.context_builder import build_messages
 
 load_dotenv()
 
@@ -27,37 +29,65 @@ class GroqProvider(LLMProvider):
 
         self.model = model
 
-    def generate(self, prompt, history=None, tool_result=None, system_prompt=None, tools=None):
-        """Generate a response from the LLM.
+    def generate(
+        self,
+        prompt,
+        history=None,
+        tool_result=None,
+        system_prompt=None,
+        tools=None,
+        max_tokens: int | None = None,
+        max_context_tokens: int = 6000,
+        reserve_tokens: int = 1000,
+        conversation_memory: ConversationMemory | None = None,
+    ):
+        """Generate a response from the LLM with token budget enforcement.
 
-        IMPORTANT: The caller (Executor) is responsible for storing messages
-        into ConversationMemory. This method uses `history` as the SOLE source
-        of messages, avoiding duplicate user messages. The `prompt` param is
-        only used as a fallback when no history is provided.
+        Uses ContextBuilder to construct the message list, enforces
+        the token budget, and logs usage statistics after each response.
+
+        Args:
+            prompt: Current user message (used as fallback when no history).
+            history: Legacy param — not used directly; conversation_memory is preferred.
+            tool_result: Legacy param — not used directly.
+            system_prompt: System-level instructions.
+            tools: Tool schemas for function calling.
+            max_tokens: Maximum tokens for the LLM response.
+            max_context_tokens: Maximum total context tokens allowed.
+            reserve_tokens: Tokens reserved for the LLM response.
+            conversation_memory: ConversationMemory instance for context building.
         """
+        # Build messages using ContextBuilder
         messages: list[dict] = []
 
-        # System prompt (loaded dynamically per route) comes first
-        if system_prompt:
-            messages.append({
-                "role": "system",
-                "content": system_prompt,
-            })
-
-        # History is the authoritative message list — includes user, assistant, tool
-        if history:
-            for msg in history:
-                d = msg.to_dict()
-                # Skip any stale system messages from memory (we prepend fresh one above)
-                if d["role"] == "system":
-                    continue
-                messages.append(d)
+        if conversation_memory:
+            # Use ContextBuilder for proper message construction
+            messages = build_messages(
+                system_prompt=system_prompt,
+                conversation=conversation_memory,
+                current_user_message=prompt,
+                max_context_tokens=max_context_tokens,
+                reserve_tokens=reserve_tokens,
+            )
         else:
-            # No history: use prompt as a standalone user message
-            messages.append({
-                "role": "user",
-                "content": prompt,
-            })
+            # Fallback: simple message construction
+            if system_prompt:
+                messages.append({
+                    "role": "system",
+                    "content": system_prompt,
+                })
+
+            if history:
+                for msg in history:
+                    d = msg.to_dict()
+                    if d["role"] == "system":
+                        continue
+                    messages.append(d)
+            else:
+                messages.append({
+                    "role": "user",
+                    "content": prompt,
+                })
 
         # Tool result injected as a system hint (for legacy compatibility)
         if tool_result:
@@ -70,6 +100,9 @@ class GroqProvider(LLMProvider):
             "model": self.model,
             "messages": messages,
         }
+
+        if max_tokens is not None:
+            kwargs["max_tokens"] = max_tokens
 
         if tools:
             kwargs["tools"] = tools
@@ -91,6 +124,14 @@ class GroqProvider(LLMProvider):
                         arguments=tc.function.arguments,
                     )
                 )
+
+        # Log token usage for debugging
+        if response.usage:
+            print(
+                f"[Token Usage] Prompt: {response.usage.prompt_tokens} | "
+                f"Completion: {response.usage.completion_tokens} | "
+                f"Total: {response.usage.total_tokens}"
+            )
 
         return AIResponse(
             content=message.content or "",

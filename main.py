@@ -1,27 +1,25 @@
-from app.core.ai.factory import LLMFactory
-from app.core.memory.conversation import ConversationMemory
-from app.core.memory.project import ProjectMemory
-from app.core.pipeline.context import PipelineContext
-from app.core.pipeline.pipeline import Pipeline
-from app.tools import registry
+#!/usr/bin/env python3
+# main.py
+"""
+Entry point for Glitch Assistant.
 
-memory = ConversationMemory()
+Usage:
+    python main.py          # Start CLI
+    python main.py --web    # Start Web GUI
+"""
+from __future__ import annotations
 
-context = PipelineContext(
-    llm=LLMFactory.create(),
-    conversation=memory,
-    project=ProjectMemory(),
-)
+import sys
 
-pipeline = Pipeline(context, registry=registry)
 
-while True:
-    print("\n\n")
-    prompt = input("You: ")
+def main():
+    if "--web" in sys.argv:
+        from app.interfaces.web.server import run
+        run()
+    else:
+        from app.interfaces.cli.main import run
+        run()
 
-    if prompt == "exit":
-        break
 
-    response = pipeline.run(prompt)
-    print("Content: ", response.content)
-
+if __name__ == "__main__":
+    main()

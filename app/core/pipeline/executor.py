@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+from openai import APIStatusError
 from app.tools.registry import ToolRegistry
 from app.core.utils.output_compressor import compress_output
 from app.config.settings import get_settings
@@ -7,17 +8,17 @@ from app.config.settings import get_settings
 MAX_TOOL_STEPS = 10
 
 # Task-specific max_tokens for response length optimization.
-# Shorter tasks (chat) use fewer tokens, complex tasks (planner, security) use more.
+# Chat needs room for detailed answers; complex tasks get more headroom.
 _TASK_MAX_TOKENS = {
-    "chat": 256,
-    "code_review": 512,
-    "debugging": 512,
-    "documentation": 512,
-    "planner": 1024,
-    "security": 1024,
-    "debug": 512,
-    "review": 512,
-    "document": 512,
+    "chat": 2048,
+    "code_review": 2048,
+    "debugging": 2048,
+    "documentation": 2048,
+    "planner": 4096,
+    "security": 4096,
+    "debug": 2048,
+    "review": 2048,
+    "document": 2048,
 }
 
 
@@ -29,6 +30,7 @@ class Executor:
         self.max_tool_output_chars = int(settings.max_tool_output_chars)
         self.max_context_tokens = int(settings.max_context_tokens)
         self.reserve_tokens = int(settings.reserve_response_tokes)
+        self._tools_disabled = False  # Cache: set True if model doesn't support tool calling
 
     def execute(self, task, prompt, context, prompts=None, system_prompt=None):
         """Execute a prompt with the given task context.
@@ -60,6 +62,11 @@ class Executor:
         - Uses task-specific max_tokens for response length control.
         - Logs token usage after each LLM call.
 
+        Tool calling fallback:
+        - If the model does NOT support tool calling (e.g. groq/compound-mini),
+          catches the API error, disables tools for subsequent calls, and
+          retries without the tool schemas. This is cached in self._tools_disabled.
+
         All tool outputs are compressed BEFORE being added to conversation memory
         to prevent context window overflow.
         """
@@ -67,25 +74,50 @@ class Executor:
         context.conversation.add_user(prompt)
 
         # Determine max_tokens for this task
-        max_tokens = _TASK_MAX_TOKENS.get(task, 256)
+        max_tokens = _TASK_MAX_TOKENS.get(task, 2048)
 
         step = 0
-        tools = self.registry.schemas() if self.registry.names() else None
+        tools = None
+        if not self._tools_disabled:
+            tools = self.registry.schemas() if self.registry.names() else None
         response = None
 
         while step < MAX_TOOL_STEPS:
             step += 1
 
-            # Call LLM with token-optimized context
-            response = context.llm.generate(
-                prompt=prompt,
-                system_prompt=system_prompt,
-                tools=tools,
-                max_tokens=max_tokens,
-                max_context_tokens=self.max_context_tokens,
-                reserve_tokens=self.reserve_tokens,
-                conversation_memory=context.conversation,
-            )
+            try:
+                # Call LLM with token-optimized context
+                response = context.llm.generate(
+                    prompt=prompt,
+                    system_prompt=system_prompt,
+                    tools=tools,
+                    max_tokens=max_tokens,
+                    max_context_tokens=self.max_context_tokens,
+                    reserve_tokens=self.reserve_tokens,
+                    conversation_memory=context.conversation,
+                )
+            except APIStatusError as e:
+                # Detect models that don't support tool calling
+                if e.status_code == 400 and "tool calling" in str(e).lower():
+                    if not self._tools_disabled:
+                        print(f"[Executor] Model doesn't support tool calling, disabling tools. Error: {e}")
+                        self._tools_disabled = True
+                        tools = None
+                        # Retry without tools
+                        response = context.llm.generate(
+                            prompt=prompt,
+                            system_prompt=system_prompt,
+                            tools=None,
+                            max_tokens=max_tokens,
+                            max_context_tokens=self.max_context_tokens,
+                            reserve_tokens=self.reserve_tokens,
+                            conversation_memory=context.conversation,
+                        )
+                    else:
+                        # Already disabled but still failing — re-raise
+                        raise
+                else:
+                    raise
 
             # Append assistant's response (text + tool_calls) to history
             context.conversation.add_assistant(
@@ -95,6 +127,11 @@ class Executor:
 
             # No tool calls -> final answer is ready
             if not response.tool_calls:
+                return response
+
+            # If tools are disabled but we got tool_calls (shouldn't happen), skip execution
+            if self._tools_disabled:
+                print("[Executor] Tools disabled but got tool_calls — treating as text.")
                 return response
 
             # Execute each tool call and append compressed results as tool messages
@@ -120,10 +157,6 @@ class Executor:
                     tool_call_id=tc.id,
                 )
 
-            # Loop: next iteration includes tool results in conversation history
-
-        # Max steps exhausted - return what we have
-        return response
 
     @staticmethod
     def _parse_arguments(raw: str | dict) -> dict:

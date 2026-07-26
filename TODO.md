@@ -1,16 +1,8 @@
-# CLI + Web GUI Redesign — Progress
+# Phase 2: Glitch Theme + Pipe-to-Table Rendering
 
-## Files to Create
-- [x] `app/application.py` — Shared factory/bootstrap
-- [x] `app/interfaces/__init__.py` — Package init
-- [x] `app/interfaces/cli/__init__.py` — Package init
-- [x] `app/interfaces/cli/main.py` — CLI interface
-- [x] `app/interfaces/web/__init__.py` — Package init
-- [x] `app/interfaces/web/server.py` — FastAPI server
-- [x] `app/interfaces/web/templates/index.html` — Chat UI
-- [x] `app/interfaces/web/static/style.css` — Styles
-- [x] `app/interfaces/web/static/script.js` — Frontend JS
-
-## Files to Modify
-- [x] `main.py` — Entry point with `--web` flag
-- [x] `requirements.txt` — Add fastapi, uvicorn
+## Steps
+- [x] Phase 1: Minimalist redesign (HTML fix, CSS rewrite, JS compat)
+- [x] 1. Enhance renderMarkdown in script.js - detect pipe chars and render as HTML tables
+- [x] 2. Rewrite CSS - blue glitch theme with animations, scanlines, glow effects
+- [x] 3. Add data-text attribute to header for glitch animation
+- [ ] 4. Restart server and verify

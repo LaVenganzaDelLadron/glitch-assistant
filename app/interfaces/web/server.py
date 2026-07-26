@@ -94,7 +94,7 @@ async def reset_conversation() -> JSONResponse:
 
 
 # ── Entry point ──────────────────────────────────────────────────────────
-def run(host: str = "0.0.0.0", port: int = 8080) -> None:
+def run(host: str = "0.0.0.0", port: int = 8000) -> None:
     """Launch the web server."""
     import uvicorn
 

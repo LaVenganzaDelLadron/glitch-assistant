@@ -8,7 +8,7 @@
     const loading = document.getElementById('loading');
     const newChatBtn = document.getElementById('new-chat-btn');
 
-    // Simple markdown-like renderer for chat responses
+    // Markdown renderer with pipe-to-table support
     function renderMarkdown(text) {
         if (!text) return '';
 
@@ -19,9 +19,9 @@
             .replace(/>/g, '>');
 
         // Code blocks (fenced)
-        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-            const langClass = lang ? ` class="language-${lang}"` : '';
-            return `<pre><code${langClass}>${code.trim()}</code></pre>`;
+        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function (_, lang, code) {
+            var langClass = lang ? ' class="language-' + lang + '"' : '';
+            return '<pre><code' + langClass + '>' + code.trim() + '</code></pre>';
         });
 
         // Inline code
@@ -45,24 +45,68 @@
         // Horizontal rules
         html = html.replace(/^---$/gm, '<hr>');
 
+        // ── Table rendering ──────────────────────────────
+        html = html.replace(
+            /((?:^[^\n]*\|[^\n]*\n?)+\n?)/gm,
+            function (block) {
+                var lines = block.trim().split('\n');
+                if (lines.length < 2) return block;
+
+                var sepLine = lines[1] || '';
+                var isSeparator = /^[\s\|:\-]+$/.test(sepLine) && /\|/.test(sepLine) && /-{3,}/.test(sepLine);
+                if (!isSeparator) return block;
+
+                var separators = sepLine.split('|').filter(function (s) { return s.trim() !== ''; });
+                var alignments = separators.map(function (sep) {
+                    var trimmed = sep.trim();
+                    if (trimmed.charAt(0) === ':' && trimmed.charAt(trimmed.length - 1) === ':') return 'center';
+                    if (trimmed.charAt(trimmed.length - 1) === ':') return 'right';
+                    return 'left';
+                });
+
+                var headerCells = lines[0].split('|').filter(function (c) { return c.trim() !== ''; }).map(function (c) { return c.trim(); });
+                var dataRows = lines.slice(2).filter(function (row) { return row.trim() !== '' && /\|/.test(row); });
+
+                var tableHtml = '<div class="table-wrapper"><table>';
+                tableHtml += '<thead><tr>';
+                headerCells.forEach(function (cell, i) {
+                    var align = alignments[i] || 'left';
+                    tableHtml += '<th style="text-align:' + align + '">' + cell + '</th>';
+                });
+                tableHtml += '</tr></thead>';
+                tableHtml += '<tbody>';
+                dataRows.forEach(function (row) {
+                    var cells = row.split('|').filter(function (c) { return c.trim() !== ''; }).map(function (c) { return c.trim(); });
+                    if (cells.length === 0) return;
+                    tableHtml += '<tr>';
+                    cells.forEach(function (cell, i) {
+                        var align = alignments[i] || 'left';
+                        tableHtml += '<td style="text-align:' + align + '">' + cell + '</td>';
+                    });
+                    tableHtml += '</tr>';
+                });
+                tableHtml += '</tbody></table></div>';
+                return tableHtml;
+            }
+        );
+
         // Paragraphs (double newlines)
-        const paragraphs = html.split(/\n\n+/);
-        html = paragraphs.map(p => {
-            const trimmed = p.trim();
+        var paragraphs = html.split(/\n\n+/);
+        html = paragraphs.map(function (p) {
+            var trimmed = p.trim();
             if (!trimmed) return '';
-            // Skip if already wrapped in block-level tags
-            if (/^<(?:ul|ol|li|pre|blockquote|hr|h[1-6])/.test(trimmed)) return trimmed;
-            return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
+            if (/^<(?:table|div|ul|ol|li|pre|blockquote|hr|h[1-6])/.test(trimmed)) return trimmed;
+            return '<p>' + trimmed.replace(/\n/g, '<br>') + '</p>';
         }).join('\n');
 
         return html;
     }
 
     function addMessage(role, content, meta) {
-        const div = document.createElement('div');
-        div.className = `message ${role}`;
+        var div = document.createElement('div');
+        div.className = 'message ' + role;
 
-        const bubble = document.createElement('div');
+        var bubble = document.createElement('div');
         bubble.className = 'bubble';
 
         if (role === 'assistant') {
@@ -74,18 +118,18 @@
         div.appendChild(bubble);
 
         if (meta) {
-            const metaDiv = document.createElement('div');
+            var metaDiv = document.createElement('div');
             metaDiv.className = 'message-meta';
             if (meta.model) {
-                const badge = document.createElement('span');
+                var badge = document.createElement('span');
                 badge.className = 'usage-badge';
-                badge.textContent = `Model: ${meta.model}`;
+                badge.textContent = 'Model: ' + meta.model;
                 metaDiv.appendChild(badge);
             }
             if (meta.usage) {
-                const badge = document.createElement('span');
+                var badge = document.createElement('span');
                 badge.className = 'usage-badge';
-                badge.textContent = `Tokens: ${meta.usage.total_tokens || '?'}`;
+                badge.textContent = 'Tokens: ' + (meta.usage.total_tokens || '?');
                 metaDiv.appendChild(badge);
             }
             div.appendChild(metaDiv);
@@ -100,39 +144,36 @@
     }
 
     async function sendMessage() {
-        const message = messageInput.value.trim();
+        var message = messageInput.value.trim();
         if (!message) return;
 
-        // Add user message
         addMessage('user', message);
         messageInput.value = '';
         messageInput.style.height = 'auto';
 
-        // Show loading
         sendBtn.disabled = true;
         loading.classList.add('active');
 
         try {
-            const response = await fetch('/api/chat', {
+            var response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message }),
+                body: JSON.stringify({ message: message }),
             });
 
             if (!response.ok) {
-                const err = await response.json();
+                var err = await response.json();
                 throw new Error(err.detail || 'Request failed');
             }
 
-            const data = await response.json();
+            var data = await response.json();
 
-            // Add assistant response
             addMessage('assistant', data.content, {
                 model: data.model,
                 usage: data.usage,
             });
         } catch (error) {
-            addMessage('assistant', `**Error:** ${error.message}`);
+            addMessage('assistant', '**Error:** ' + error.message);
         } finally {
             sendBtn.disabled = false;
             loading.classList.remove('active');
@@ -144,19 +185,19 @@
         if (!confirm('Start a new conversation? This will clear the chat history.')) return;
 
         try {
-            const response = await fetch('/api/reset', { method: 'POST' });
+            var response = await fetch('/api/reset', { method: 'POST' });
             if (!response.ok) throw new Error('Reset failed');
             chatContainer.innerHTML = '';
             addMessage('assistant', 'Conversation reset. How can I help you?');
         } catch (error) {
-            addMessage('assistant', `**Error resetting:** ${error.message}`);
+            addMessage('assistant', '**Error resetting:** ' + error.message);
         }
     }
 
     // Auto-resize textarea
     messageInput.addEventListener('input', function () {
         this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
     });
 
     // Send on Enter (Shift+Enter for newline)
@@ -173,6 +214,5 @@
     // Welcome message
     addMessage('assistant', 'Hello! I am **Glitch Assistant**, your AI software engineering assistant. How can I help you today?');
 
-    // Focus input on load
     messageInput.focus();
 })();

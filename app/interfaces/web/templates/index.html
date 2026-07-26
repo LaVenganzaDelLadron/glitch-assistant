@@ -8,34 +8,23 @@
 </head>
 <body>
     <header>
-        <h1>
-            Glitch Assistant
-            <span>AI Software Engineer</span>
-        </h1>
-        <div class="header-actions">
-            <button class="btn btn-danger" id="new-chat-btn">
-                New Chat
-            </button>
-        </div>
+        <h1 data-text="Glitch Assistant">Glitch Assistant</h1>
+        <button id="new-chat-btn" title="New conversation">+ New</button>
     </header>
 
     <div id="chat-container"></div>
 
-    <div id="loading">
-        <div class="typing-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-
     <div id="input-area">
+        <div id="loading">
+            <span>Thinking</span>
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         <div id="input-wrapper">
-            <textarea
-                id="message-input"
-                placeholder="Type your message here... (Enter to send, Shift+Enter for newline)"
-                rows="1"
-            ></textarea>
-            <button id="send-btn" title="Send message">&#9654;</button>
+            <textarea id="message-input" placeholder="Type a message..." rows="1"></textarea>
+            <button id="send-btn">Send</button>
         </div>
 
     <script src="/static/script.js"></script>

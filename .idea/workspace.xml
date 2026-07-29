@@ -4,15 +4,8 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3259e209-bc5a-406b-8ce6-628b59df8e7f" name="Changes" comment="update prompt in security">
+    <list default="true" id="3259e209-bc5a-406b-8ce6-628b59df8e7f" name="Changes" comment="update all prompts">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prompts/chat.md" beforeDir="false" afterPath="$PROJECT_DIR$/prompts/chat.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prompts/code_review.md" beforeDir="false" afterPath="$PROJECT_DIR$/prompts/code_review.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prompts/debugging.md" beforeDir="false" afterPath="$PROJECT_DIR$/prompts/debugging.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prompts/documentation.md" beforeDir="false" afterPath="$PROJECT_DIR$/prompts/documentation.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prompts/planner.md" beforeDir="false" afterPath="$PROJECT_DIR$/prompts/planner.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prompts/security.md" beforeDir="false" afterPath="$PROJECT_DIR$/prompts/security.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prompts/system.md" beforeDir="false" afterPath="$PROJECT_DIR$/prompts/system.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,61 +43,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0002024705922399" />
-      <entry key="MS500" value="1.1825040013318153" />
-      <entry key="S2" value="1.6536095838615275" />
-      <entry key="S5" value="1.8517231200661253" />
-      <entry key="S10" value="2.1375459248554813" />
-      <entry key="S30" value="4.212859133713625" />
-      <entry key="S60" value="7.5360470267531054" />
-      <entry key="M2" value="13.247726858279831" />
-      <entry key="M5" value="25.049167400173424" />
-      <entry key="M10" value="47.51275870796054" />
-      <entry key="M15" value="69.15888353217505" />
-      <entry key="M30" value="111.54967453786222" />
-      <entry key="H1" value="146.98974463387955" />
-      <entry key="H2" value="170.1558416152723" />
-      <entry key="H4" value="183.43509057449907" />
-      <entry key="D1" value="195.47781703979703" />
-      <entry key="W1" value="197.63729484014058" />
+      <entry key="MS100" value="1.0121735085435066" />
+      <entry key="MS500" value="1.7169429922709747" />
+      <entry key="S2" value="3.858961158936723" />
+      <entry key="S5" value="5.33919770447247" />
+      <entry key="S10" value="6.205268197952476" />
+      <entry key="S30" value="8.34223027056035" />
+      <entry key="S60" value="11.58370457209612" />
+      <entry key="M2" value="17.436186472055958" />
+      <entry key="M5" value="29.809824569678423" />
+      <entry key="M10" value="52.35634501587466" />
+      <entry key="M15" value="74.05569206203829" />
+      <entry key="M30" value="116.84410149816007" />
+      <entry key="H1" value="152.8626429253759" />
+      <entry key="H2" value="176.502452460702" />
+      <entry key="H4" value="190.08261946679303" />
+      <entry key="D1" value="202.41517311626214" />
+      <entry key="W1" value="204.6282457979345" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="1.928682467143927E-207" />
-      <entry key="S5" value="2.0611255385732295E-83" />
-      <entry key="S10" value="4.544260951690844E-42" />
-      <entry key="S30" value="1.9938939086932484E-14" />
-      <entry key="S60" value="2.468872424494743E-7" />
-      <entry key="M2" value="0.0012422097936521399" />
-      <entry key="M5" value="0.2839889237531199" />
-      <entry key="M10" value="1.9926516487567028" />
-      <entry key="M15" value="3.9212894928594464" />
-      <entry key="M30" value="7.847886030504873" />
-      <entry key="H1" value="11.17871220592612" />
-      <entry key="H2" value="13.365662857835773" />
-      <entry key="H4" value="14.621381724356333" />
-      <entry key="D1" value="15.761180208444202" />
-      <entry key="W1" value="15.965654193939804" />
+      <entry key="S2" value="1.920769248071503E-213" />
+      <entry key="S5" value="8.19200538426747E-86" />
+      <entry key="S10" value="2.8648781480198754E-43" />
+      <entry key="S30" value="7.935659238430127E-15" />
+      <entry key="S60" value="1.5575397209304735E-7" />
+      <entry key="M2" value="9.866547021125278E-4" />
+      <entry key="M5" value="0.2589938778516973" />
+      <entry key="M10" value="1.9029414720177138" />
+      <entry key="M15" value="3.8026959703159844" />
+      <entry key="M30" value="7.728301148115821" />
+      <entry key="H1" value="11.09321550914768" />
+      <entry key="H2" value="13.314453320976286" />
+      <entry key="H4" value="14.593344478075565" />
+      <entry key="D1" value="15.756139034463699" />
+      <entry key="W1" value="15.964924583281624" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.952829546895963" />
-      <entry key="MS500" value="1.1708340213733366" />
-      <entry key="S2" value="1.6493768285798396" />
-      <entry key="S5" value="1.8498095568633275" />
-      <entry key="S10" value="2.1364344308514274" />
-      <entry key="S30" value="4.211739818524764" />
-      <entry key="S60" value="7.532643364195046" />
-      <entry key="M2" value="13.24301547374722" />
-      <entry key="M5" value="25.32287948053668" />
-      <entry key="M10" value="49.483388565936245" />
-      <entry key="M15" value="73.05291566133569" />
-      <entry key="M30" value="119.37112209617577" />
-      <entry key="H1" value="158.14980449828658" />
-      <entry key="H2" value="183.5103955423538" />
-      <entry key="H4" value="198.050406228681" />
-      <entry key="D1" value="211.23790886549787" />
-      <entry key="W1" value="213.60279156835378" />
+      <entry key="MS100" value="0.9711036234833433" />
+      <entry key="MS500" value="1.7043011813477553" />
+      <entry key="S2" value="3.851922762023013" />
+      <entry key="S5" value="5.335182581401049" />
+      <entry key="S10" value="6.202886761345923" />
+      <entry key="S30" value="8.34093087132922" />
+      <entry key="S60" value="11.581118794376893" />
+      <entry key="M2" value="17.432222111159348" />
+      <entry key="M5" value="30.059356492374437" />
+      <entry key="M10" value="54.23821119728094" />
+      <entry key="M15" value="77.83192504494046" />
+      <entry key="M30" value="124.54635203492455" />
+      <entry key="H1" value="163.93734124361143" />
+      <entry key="H2" value="189.80583566026704" />
+      <entry key="H4" value="204.6699076296333" />
+      <entry key="D1" value="218.170223803226" />
+      <entry key="W1" value="220.5930128779886" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -190,7 +183,15 @@
       <option name="project" value="LOCAL" />
       <updated>1785196097732</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="update all prompts">
+      <option name="closed" value="true" />
+      <created>1785196725988</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1785196725988</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -201,6 +202,7 @@
     <MESSAGE value="update README and requirements" />
     <MESSAGE value="add gif to the repo" />
     <MESSAGE value="update prompt in security" />
-    <option name="LAST_COMMIT_MESSAGE" value="update prompt in security" />
+    <MESSAGE value="update all prompts" />
+    <option name="LAST_COMMIT_MESSAGE" value="update all prompts" />
   </component>
 </project>

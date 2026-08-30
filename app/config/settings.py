@@ -24,7 +24,7 @@ class Settings:
     reserve_response_tokes: int = os.getenv("DEFAULT_RESERVE_RESPONSE_TOKES")
 
 def get_settings() -> Settings:
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY1")
     if not api_key:
         print("Please set GROQ_API_KEY environment variable")
 

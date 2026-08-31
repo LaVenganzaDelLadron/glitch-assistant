@@ -19,8 +19,11 @@ class LLMFactory:
         settings = get_settings()
 
         return cls._providers[provider](
-            api_key=settings.api_key,
+            api_keys=settings.api_keys,
             base_url=settings.base_url,
             model=settings.model,
             timeout=settings.timeout,
+            max_api_attempts=settings.max_api_attempts,
+            rate_limit_cooldown_seconds=settings.rate_limit_cooldown_seconds,
+            temporary_failure_cooldown_seconds=settings.temporary_failure_cooldown_seconds,
         )

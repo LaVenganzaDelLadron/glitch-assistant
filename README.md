@@ -144,29 +144,38 @@ pip install -r requirements.txt
 
 ## Configure
 
-Create a `.env` file in the project root with your API key:
+Create a `.env` file in the project root with one to five API keys. At least one
+key slot is required; leave unused slots out entirely.
 
 ```dotenv
-GROQ_API_KEY=gsk_your-api-key-here
+GROQ_API_KEY1=your_key_here
+GROQ_API_KEY2=your_key_here
+GROQ_API_KEY3=your_key_here
+GROQ_API_KEY4=your_key_here
+GROQ_API_KEY5=your_key_here
+GROQ_MODEL=your_model
+GROQ_BASE_URL=your_base_url
+GROQ_TIMEOUT=60
 ```
 
 ### All Configuration Options
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GROQ_API_KEY` | *(required)* | Your Groq API key |
-| `GROQ_MODEL` | Uses Groq default | Model identifier (e.g., `mixtral-8x7b-32768`) |
-| `GROQ_BASE_URL` | Groq's API URL | Base URL for the OpenAI-compatible API |
+| `GROQ_API_KEY1` … `GROQ_API_KEY5` | At least one required | Groq API key slots, used round-robin |
+| `GROQ_MODEL` | *(required)* | Shared model identifier |
+| `GROQ_BASE_URL` | *(required)* | Shared OpenAI-compatible API base URL |
 | `GROQ_TIMEOUT` | `60` | Request timeout in seconds |
+| `GROQ_MAX_API_ATTEMPTS` | `5` | Maximum different keys tried per logical request |
+| `GROQ_RATE_LIMIT_COOLDOWN_SECONDS` | `60` | Base cooldown after a `429` response |
+| `GROQ_TEMPORARY_FAILURE_COOLDOWN_SECONDS` | `5` | Cooldown after a timeout, network, or server failure |
 | `DEFAULT_MAX_CONTEXT_TOKENS` | `6000` | Maximum context tokens for the LLM |
 | `DEFAULT_MAX_HISTORY_MESSAGES` | `20` | Max conversation history messages kept in memory |
 | `DEFAULT_MAX_TOOL_OUTPUT_CHARS` | `3000` | Max characters per tool output before compression |
 | `DEFAULT_MAX_FILE_SIZE` | `10000` | Max file size in characters for read operations |
-| `DEFAULT_MAX_LIST_ITEMS` | `50` | Max items shown when listing directories |
+| `DEFAULT_MAX_FILE_LIST_ITEMS` | `50` | Max items shown when listing directories (`DEFAULT_MAX_LIST_ITEMS` is accepted for compatibility) |
 | `DEFAULT_MAX_OUTPUT_LINES` | `100` | Max lines for terminal command output |
 | `DEFAULT_RESERVE_RESPONSE_TOKES` | `1000` | Tokens reserved for the LLM response |
-
-*(Note: `RESPONSE_TOKES` is a legacy spelling — both the variable and code use this form for now.)*
 
 ## Usage
 

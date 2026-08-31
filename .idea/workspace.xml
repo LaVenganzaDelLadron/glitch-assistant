@@ -4,14 +4,10 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3259e209-bc5a-406b-8ce6-628b59df8e7f" name="Changes" comment="remove unnecessary files">
-      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
+    <list default="true" id="3259e209-bc5a-406b-8ce6-628b59df8e7f" name="Changes" comment="feat: add multi-key Groq API rotation with cooldown handling">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/config/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/config/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/core/ai/factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/ai/factory.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/core/ai/groq.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/ai/groq.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/core/pipeline/executor.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/pipeline/executor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prompts/chat.md" beforeDir="false" afterPath="$PROJECT_DIR$/prompts/chat.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prompts/security.md" beforeDir="false" afterPath="$PROJECT_DIR$/prompts/security.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -165,7 +161,7 @@
       <workItem from="1786180095692" duration="894000" />
       <workItem from="1786188283498" duration="20000" />
       <workItem from="1788088335264" duration="1161000" />
-      <workItem from="1788191524410" duration="1761000" />
+      <workItem from="1788191524410" duration="2964000" />
     </task>
     <task id="LOCAL-00001" summary="the first commit of my assistant ai">
       <option name="closed" value="true" />
@@ -223,7 +219,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788088979621</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="feat: add multi-key Groq API rotation with cooldown handling">
+      <option name="closed" value="true" />
+      <created>1788193493145</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1788193493145</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -237,6 +241,7 @@
     <MESSAGE value="update all prompts" />
     <MESSAGE value="UPDATE README.md" />
     <MESSAGE value="remove unnecessary files" />
-    <option name="LAST_COMMIT_MESSAGE" value="remove unnecessary files" />
+    <MESSAGE value="feat: add multi-key Groq API rotation with cooldown handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add multi-key Groq API rotation with cooldown handling" />
   </component>
 </project>

@@ -4,7 +4,15 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3259e209-bc5a-406b-8ce6-628b59df8e7f" name="Changes" comment="remove unnecessary files" />
+    <list default="true" id="3259e209-bc5a-406b-8ce6-628b59df8e7f" name="Changes" comment="remove unnecessary files">
+      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/config/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/config/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/core/ai/factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/ai/factory.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/core/ai/groq.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/ai/groq.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/core/pipeline/executor.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/pipeline/executor.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -34,73 +42,73 @@
     &quot;assignee&quot;: &quot;LaVenganzaDelLadron&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/LaVenganzaDelLadron/glitch-assistant.git&quot;,
-    &quot;accountId&quot;: &quot;865aa70e-6cd0-406a-bb0a-ab54717e1b3b&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/LaVenganzaDelLadron/glitch-assistant.git",
+    "accountId": "175ca3b0-4f45-44d1-8675-f66bc49428d3"
   }
-}</component>
+}]]></component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0089122167940816" />
-      <entry key="MS500" value="1.4051299849407108" />
-      <entry key="S2" value="2.6721842148515593" />
-      <entry key="S5" value="4.071167134731251" />
-      <entry key="S10" value="4.888861660097485" />
-      <entry key="S30" value="5.5917815908961614" />
-      <entry key="S60" value="5.952804271077408" />
-      <entry key="M2" value="9.009356703916628" />
-      <entry key="M5" value="28.588388318366153" />
-      <entry key="M10" value="59.88773741114085" />
-      <entry key="M15" value="86.55330453860496" />
-      <entry key="M30" value="139.98230994555925" />
-      <entry key="H1" value="187.37129433171947" />
-      <entry key="H2" value="219.73178377560248" />
-      <entry key="H4" value="238.75426552534856" />
-      <entry key="D1" value="256.2928840791609" />
-      <entry key="W1" value="259.4661795654122" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0000000374936495" />
+      <entry key="S60" value="1.0010249291379694" />
+      <entry key="M2" value="1.1752602966628671" />
+      <entry key="M5" value="6.135920095129584" />
+      <entry key="M10" value="24.82253834347465" />
+      <entry key="M15" value="47.7318041526455" />
+      <entry key="M30" value="107.61838586509825" />
+      <entry key="H1" value="173.89304931970977" />
+      <entry key="H2" value="225.41082615358258" />
+      <entry key="H4" value="257.8917684441436" />
+      <entry key="D1" value="289.21461656015066" />
+      <entry key="W1" value="295.0194144679985" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="2.174332050211774E-298" />
-      <entry key="S5" value="8.608559756937014E-120" />
-      <entry key="S10" value="2.9368129703081316E-60" />
-      <entry key="S30" value="1.723877450936165E-20" />
-      <entry key="S60" value="2.2956243362724595E-10" />
-      <entry key="M2" value="3.787878451025905E-5" />
-      <entry key="M5" value="0.07030429152347605" />
-      <entry key="M10" value="0.9914517872399552" />
-      <entry key="M15" value="2.462194652509205" />
-      <entry key="M30" value="6.218697425905147" />
-      <entry key="H1" value="9.950963768577163" />
-      <entry key="H2" value="12.610351342926487" />
-      <entry key="H4" value="14.202237072413968" />
-      <entry key="D1" value="15.684961549051742" />
-      <entry key="W1" value="15.95460162851793" />
+      <entry key="S2" value="4.324425625032444E-132" />
+      <entry key="S5" value="2.8468944965321065E-53" />
+      <entry key="S10" value="5.3356297627666284E-27" />
+      <entry key="S30" value="1.747411657976217E-9" />
+      <entry key="S60" value="4.180205327467467E-5" />
+      <entry key="M2" value="0.0064654644720081745" />
+      <entry key="M5" value="0.13607490352833954" />
+      <entry key="M10" value="0.5681546494310358" />
+      <entry key="M15" value="1.366781433402471" />
+      <entry key="M30" value="4.381650804905498" />
+      <entry key="H1" value="8.486774192569893" />
+      <entry key="H2" value="11.969930888253703" />
+      <entry key="H4" value="14.253742170031241" />
+      <entry key="D1" value="16.506342641389516" />
+      <entry key="W1" value="16.928542348483795" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.954547763086984" />
-      <entry key="MS500" value="1.3901470321259344" />
-      <entry key="S2" value="2.664680963450785" />
-      <entry key="S5" value="4.066364651819686" />
-      <entry key="S10" value="4.885923899018759" />
-      <entry key="S30" value="5.590646136335218" />
-      <entry key="S60" value="5.952094415670081" />
-      <entry key="M2" value="9.008012404847708" />
-      <entry key="M5" value="28.654048158443608" />
-      <entry key="M10" value="60.86640751869572" />
-      <entry key="M15" value="88.99691634985182" />
-      <entry key="M30" value="146.17917050654657" />
-      <entry key="H1" value="197.30516659101835" />
-      <entry key="H2" value="232.33139818215145" />
-      <entry key="H4" value="252.95047943655874" />
-      <entry key="D1" value="271.97674023883286" />
-      <entry key="W1" value="275.42062064491455" />
+      <entry key="MS100" value="0.8950250709279725" />
+      <entry key="MS500" value="0.9780634734473393" />
+      <entry key="S2" value="0.9944701686732144" />
+      <entry key="S5" value="0.9977843871238888" />
+      <entry key="S10" value="0.9988915792636801" />
+      <entry key="S30" value="0.9996304288750826" />
+      <entry key="S60" value="1.0008794866691482" />
+      <entry key="M2" value="1.1814398377844129" />
+      <entry key="M5" value="6.270124558445986" />
+      <entry key="M10" value="25.385767899419275" />
+      <entry key="M15" value="49.08996235734714" />
+      <entry key="M30" value="111.98563634964879" />
+      <entry key="H1" value="182.3657937734433" />
+      <entry key="H2" value="237.37085490374463" />
+      <entry key="H4" value="272.1396147149038" />
+      <entry key="D1" value="305.71982140866555" />
+      <entry key="W1" value="311.9477901231003" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -115,28 +123,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "ai-pipeline",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/darkglitch/PycharmProjects/glitch-assistant",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;ai-pipeline&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/darkglitch/PycharmProjects/glitch-assistant&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -156,7 +164,8 @@
       <workItem from="1786179213831" duration="622000" />
       <workItem from="1786180095692" duration="894000" />
       <workItem from="1786188283498" duration="20000" />
-      <workItem from="1788088335264" duration="646000" />
+      <workItem from="1788088335264" duration="1161000" />
+      <workItem from="1788191524410" duration="1761000" />
     </task>
     <task id="LOCAL-00001" summary="the first commit of my assistant ai">
       <option name="closed" value="true" />

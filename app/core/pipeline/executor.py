@@ -29,7 +29,7 @@ class Executor:
         settings = get_settings()
         self.max_tool_output_chars = int(settings.max_tool_output_chars)
         self.max_context_tokens = int(settings.max_context_tokens)
-        self.reserve_tokens = int(settings.reserve_response_tokes)
+        self.reserve_tokens = settings.reserve_response_tokens
         self._tools_disabled = False  # Cache: set True if model doesn't support tool calling
 
     def execute(self, task, prompt, context, prompts=None, system_prompt=None):
